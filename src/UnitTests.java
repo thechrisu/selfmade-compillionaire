@@ -1,16 +1,18 @@
-import static org.junit.Assert.*;
+import java_cup.runtime.Symbol;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
+import org.junit.Test;
+
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
-import java_cup.runtime.Symbol;
+import jflex.sym;
 
-import org.junit.Test;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public class UnitTests {
 
@@ -200,9 +202,9 @@ public class UnitTests {
 		assertParsing("=", Arrays.asList(sym.EQ));
 		assertParsing("+", Arrays.asList(sym.PLUS));
 		assertParsing("-", Arrays.asList(sym.MINUS));
-		assertParsing("*", Arrays.asList(sym.TIMES));
+		assertParsing("*", Arrays.asList(sym.MULT));
 		assertParsing("^", Arrays.asList(sym.POWER));
-		assertParsing("/", Arrays.asList(sym.DIVIDE));
+		assertParsing("/", Arrays.asList(sym.DIV));
 		assertParsing("&&", Arrays.asList(sym.AND));
 		assertParsing("!=", Arrays.asList(sym.NEQ));
 		assertParsing("!", Arrays.asList(sym.NOT));
@@ -219,7 +221,7 @@ public class UnitTests {
 		assertParsing("abc // Hello", Arrays.asList(sym.IDENTIFIER));
 		assertParsing("abc // Hello \n cde", Arrays.asList(sym.IDENTIFIER, sym.IDENTIFIER));
 		assertParsing("abc /** Hello \n\n\n world */ \n cde", Arrays.asList(sym.IDENTIFIER, sym.IDENTIFIER));
-		assertParsing("abc /** Hello", Arrays.asList(sym.IDENTIFIER, sym.DIVIDE, sym.TIMES, sym.TIMES, sym.IDENTIFIER));
+		assertParsing("abc /** Hello", Arrays.asList(sym.IDENTIFIER, sym.DIV, sym.MULT, sym.MULT, sym.IDENTIFIER));
 	}
 	
 	@Test
