@@ -1,1 +1,6 @@
-script: ./doeverything.sh
+language: java
+jdk:
+  - oraclejdk8
+script:
+ - make
+ - make test
