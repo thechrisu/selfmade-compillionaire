@@ -1,0 +1,6 @@
+EXAMPLE:
+Paragraph: 72
+Problem: it is not clear whether we can omit both the start and end indices
+in sequence slicing, like "foo = bar[:]".
+Our solution: this is possible in many other languages that support list
+slicing (like Python), so our compiler accepts this syntax.
