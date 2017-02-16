@@ -8,3 +8,7 @@ slicing (like Python), so our compiler accepts this syntax.
 Paragraph: 17
 Problem: It's ambiguous whether variables can be declared without initialisation.
 Our solution: The wording in the paragraph suggests that it is possible so we're assuming it is. (TODO: Update)
+
+Paragraph: 5
+Problem: It's unclear exactly which single-quote character is meant in the definition of a char. 
+Our solution: For simplicity, we only go with ASCII 39 ('), the character used to denote character literals in Java

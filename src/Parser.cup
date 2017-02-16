@@ -55,7 +55,7 @@ parser code {:
 :};
 
 // Do something with ILLEGAL_CHARARCTER or drop it.
-terminal INTEGER, IDENTIFIER, LET, EQUAL, SEMICOL, PLUS, MINUS, MULT, DIV;
+terminal INTEGER, FLOAT, BOOL, CHAR, IDENTIFIER, LET, EQUAL, SEMICOL, PLUS, MINUS, MULT, DIV;
 terminal LCURLY, RCURLY;
 terminal LPAREN, RPAREN;
 terminal BADCHAR; //TODO: Return this? When is it used?
@@ -80,10 +80,22 @@ top_level ::= functions_or_global_declarations:fog {:
 functions_or_global_declarations ::= functions_or_main:fs {: RESULT = (Node) fs; :};
 
 
-main_function ::= MAIN function_body;
+main_function ::= MAIN function_body:fb {:
+                          Node n = new Node("MainFunc");
+                          n.addChild((Node) fb);
+                          RESULT = n;
+                    :};
 
-functions_or_main ::= main_function functions
-                    | normal_function functions_or_main;
+functions_or_main ::= main_function:mf functions:fu {:
+                          Node n = (Node) mf;
+                          n.addChild((Node) fu);
+                          RESULT = n;
+                      :}
+                    | normal_function:nf functions_or_main:fum {:
+                          Node n = (Node) nf;
+                          n.addChild((Node) fum);
+                          RESULT = n;
+                      :};
 
 functions ::= normal_function:f functions:fs {:
                     // TODO: Fix node generation
@@ -95,7 +107,7 @@ functions ::= normal_function:f functions:fs {:
                ;
 
 // TODO: Add method parameters (a.k.a. function arguments)
-normal_function ::= FDEF IDENTIFIER:i function_body;
+normal_function ::= FDEF IDENTIFIER:i function_body:fb {: RESULT = (Node) fb; :};
 
 // TODO: Add declaration between statements
 function_body ::= LCURLY statements:ss RCURLY SEMICOL {:

@@ -60,18 +60,27 @@ Letter = [a-zA-Z]
 Digit = [0-9]
 IdChar = {Letter} | {Digit} | "_"
 Identifier = {Letter}{IdChar}*
-Integer = (0|[1-9]{Digit}*)
-
+Integer = (-?{Digit}+)
+Float = (-?{Digit}+\.{Digit}+) //TODO what format to have for floats? e.g. do we allow -.1 for -.0.1,
+Bool = (T|F)
+Char = ([a-zA-Z\x21-\x40\x5b-\x60\x7b-\x7e])
+//TODO: Test for allowed/disallowed chars
+CharVar = (\'{Char}')
+//TODO: Allow other types of single quotes? (like)
 %%
+
 <YYINITIAL> {
-  "read"           { return symbol(sym.READ);     }
-  "print"           { return symbol(sym.PRINT);     }
-  "main"           { return symbol(sym.MAIN);     }
-  "fdef"           { return symbol(sym.FDEF);     }
+  "read"           { return symbol(sym.READ);    }
+  "print"           { return symbol(sym.PRINT);  }
+  "main"           { return symbol(sym.MAIN);    }
+  "fdef"           { return symbol(sym.FDEF);    }
 
   "let"         { return symbol(sym.LET);        }
+  {CharVar}     { return symbol(sym.CHAR);       }
   {Integer}     { return symbol(sym.INTEGER,
                                 Integer.parseInt(yytext())); }
+  {Float}       { return symbol(sym.FLOAT, Float.parseFloat(yytext())); }
+  {Bool}        { return symbol(sym.BOOL); }
   {Identifier}  { return symbol(sym.IDENTIFIER, yytext());   }
 
   {Whitespace}  { /* do nothing */               }
@@ -93,4 +102,3 @@ Integer = (0|[1-9]{Digit}*)
     ":0: Error: Invalid input '" + yytext()+"'");
   return symbol(sym.BADCHAR);
 }
-

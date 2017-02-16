@@ -1,9 +1,9 @@
-import java.io.FileReader;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.StringReader;
+import java_cup.runtime.Symbol;
 
-import java_cup.runtime.*;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 
 class Tests {
     public static void main(String[] args) {
