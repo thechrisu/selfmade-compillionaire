@@ -121,7 +121,13 @@ functions ::= normal_function:f functions:fs {:
                ;
 
 // TODO: Add method parameters (a.k.a. function arguments)
-normal_function ::= FDEF IDENTIFIER:i function_body:fb {: RESULT = (Node) fb; :};
+// TODO: Add return param
+normal_function ::= FDEF IDENTIFIER:i function_body:fb {:
+                    Node n = new Node("FDef");
+                    n.addChild((Node) i);
+                    n.addChild((Node) fb);
+                    RESULT = (Node) n;
+                    :};
 
 // TODO: Add declaration between statements
 function_body ::= LCURLY statements:ss RCURLY SEMICOL {:
@@ -135,9 +141,7 @@ statements ::= statements:ss statement:s {:
                   n.addChild((Node)s);
                   RESULT = n;
                :}
-             | /* empty */ {:
-                  RESULT = new Node("Statements");
-               :}
+             | statement:s {: RESULT = (Node) s; :}
              ;
 
 statement ::= let_bind:s {:
