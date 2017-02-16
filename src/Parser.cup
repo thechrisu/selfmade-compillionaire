@@ -54,10 +54,24 @@ parser code {:
 
 :};
 
+// Bracket extravaganza
+terminal LPAREN, RPAREN; // ()
+terminal LCURLY, RCURLY; // {}
+
+// Arithemtic operators
+terminal PLUS, MINUS, MULT, DIV;
+
+// Comparions operators
+terminal EQ, LESS, LESS_EQ; // =, <, <=
+
+// Dictionaries and sequences (collections)
+terminal DICT_START, SEQ_START, COLLECT_END; // dict<, seq<, collect_end
+
+// Other operators
+terminal CONCOT, SEMICOL; // :, ;
+
 // Do something with ILLEGAL_CHARARCTER or drop it.
-terminal INTEGER, FLOAT, BOOL, CHAR, IDENTIFIER, LET, EQUAL, SEMICOL, PLUS, MINUS, MULT, DIV;
-terminal LCURLY, RCURLY;
-terminal LPAREN, RPAREN;
+terminal INTEGER, FLOAT, BOOL, CHAR, IDENTIFIER, LET, EQUAL;
 terminal BADCHAR; //TODO: Return this? When is it used?
 terminal PRINT, READ, MAIN, FDEF;
 
