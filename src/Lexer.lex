@@ -65,13 +65,14 @@ Float = (-?{Digit}+\.{Digit}+) //TODO what format to have for floats? e.g. do we
 Bool = (T|F)
 Char = ([a-zA-Z\x21-\x40\x5b-\x60\x7b-\x7e])
 //TODO: Test for allowed/disallowed chars
-CharVar = (\'{Char}')
+Print = (print{Whitespace}+)
+Read = (read{Whitespace}+)
+CharVar = (\'{Char}\')
 //TODO: Allow other types of single quotes? (like)
 %%
-
 <YYINITIAL> {
-  "read"           { return symbol(sym.READ);    }
-  "print"           { return symbol(sym.PRINT);  }
+  {Read}           { return symbol(sym.READ);    }
+  {Print}           { return symbol(sym.PRINT);  }
   "main"           { return symbol(sym.MAIN);    }
   "fdef"           { return symbol(sym.FDEF);    }
 

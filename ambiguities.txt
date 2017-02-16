@@ -12,3 +12,18 @@ Our solution: The wording in the paragraph suggests that it is possible so we're
 Paragraph: 5
 Problem: It's unclear exactly which single-quote character is meant in the definition of a char. 
 Our solution: For simplicity, we only go with ASCII 39 ('), the character used to denote character literals in Java
+
+Paragraph: 16
+Problem: It's not explicit whether functions may be completely empty (in the definition it says
+'body consists of local variable declarations (if any), followed by statements', note that this
+does not specify whether it's 0..* or 1..* statements)
+Solution: We only allow non-empty functions (similar to Python). In particular, main is not allowed to be empty
+
+Paragraph: 15
+Problem: It's not clear whether one has to have parentheses around empty function parameter declarations,
+or whether only the main function is allowed not to have parentheses around its parameter declaration, because it is a shiny snowflake.
+Solution: TODO: Fix parameter declaration problem
+
+Paragraph: 16
+Problem: The syntax around print/read is not clear: Should there just be a single space after the keyword?
+Solution: Yes. print and read require EXACTLY one space. Unlike Python, print() or read() is not allowed

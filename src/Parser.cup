@@ -121,9 +121,7 @@ statements ::= statements:ss statement:s {:
                   n.addChild((Node)s);
                   RESULT = n;
                :}
-             | /* empty */ {:
-                  RESULT = new Node("Statements");
-               :}
+             | statement:s {: RESULT = (Node) s; :}/* empty */
              ;
 
 statement ::= let_bind:s {:
