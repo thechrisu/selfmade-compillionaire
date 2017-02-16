@@ -1,0 +1,48 @@
+###########################################
+#                                         #
+#               Terminals                 #
+#                                         #
+###########################################
+THe ones with dash in front are implemented as symbols
+
+-main
+-print
+-read
+-char
+bool
+-int
+rat
+-float
+dict
+seq
+tdef
+alias
+break
+loop
+pool
+if
+then
+else
+fi
+return
+null
+and &&
+negate !
+or ||
+impl =>
+comple <
+compleq <=
+langled <
+rangled >
+lcurly {
+rcurly }
+fdef
+semicol ;
+col :
+lparen (
+rparen )
+
+
+
+// TODO: Make this terminal?
+multicommentstart, multicommentend, onelinecomment
