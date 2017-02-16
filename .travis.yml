@@ -2,7 +2,5 @@ language: java
 jdk:
   - oraclejdk8
 script:
- - make clean
- - make
  - "cd $TRAVIS_BUILD_DIR"
  - "./tim-test.sh all"

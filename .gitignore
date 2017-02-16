@@ -6,6 +6,9 @@
 # Vim swap files
 *.swp
 
+# Temp test files
+test.temp
+
 # JetBrains IDE
 .idea
 

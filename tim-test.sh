@@ -11,6 +11,7 @@
 
 programname=$0
 defaultdir="./tests/custom/"
+testtempfile="./test.temp"
 
 # Success by default
 exitcode=0
@@ -31,6 +32,10 @@ function usage {
     echo "      [path]   path to test directory or test file"
 }
 
+function pretest {
+    make clean
+    make
+}
 function success {
     /bin/echo -e "$GREEN$1$RESET"
 }
@@ -93,17 +98,15 @@ function runfile {
     local filename=$(basename $filepath)
     local type=${filename:0:1}
     local command="java -cp bin/:lib/java-cup-11b-runtime.jar SC $filepath"
-    { result=$(eval $command 2>&1 1>&3-) ;} 3>&1
-    if [ -z "$result" ]
-    then
-        result="$(eval $command)"
-    fi
-    if [[ "$type" == "p" && "$result" == "parsing successful" ]] || [[ "$type" == "n" && ! "$result" == "parsing successful" ]] 
+
+    out=$(eval "$command" 2> $testtempfile)
+    err=$(cat $testtempfile)
+    if [[ "$type" == "p" && "$out" == *"parsing successful"* ]] || [[ "$type" == "n" && ! "$out" == *"parsing successful"* ]]
     then
         success "${indent}PASS $filename"
     else
         danger "${indent}FAIL $filename"
-        danger "${errindent}ERR: $result"
+        danger "${errindent}Error: $err"
         exitcode=1
     fi
 }
@@ -128,6 +131,8 @@ then
     echo "Invalid amount of arguments!"
     exit 1
 fi
+
+pretest
 
 # Run all tests
 if [ "$1" == "all" ]

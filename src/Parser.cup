@@ -8,7 +8,7 @@ parser code {:
   public boolean  debug()         {return debug;}
   public void     debug(boolean b){debug = b;}
   public boolean  syntaxErrors;
-  private boolean debug = false;
+  private boolean debug = true;
 
   static class Node {
     public ArrayList<Node> children;
@@ -58,13 +58,13 @@ parser code {:
 terminal INTEGER, IDENTIFIER, LET, EQUAL, SEMICOL, PLUS, MINUS, MULT, DIV;
 terminal LCURLY, RCURLY;
 terminal LPAREN, RPAREN;
-terminal BADCHAR;
+terminal BADCHAR; //TODO: Return this? When is it used?
 terminal PRINT, READ, MAIN, FDEF;
 
 nonterminal statements, statement, top_level;
 nonterminal let_bind, full_exp, simple_exp, operator;
 nonterminal print_statement, read_statement;
-nonterminal declaration; // TODO: Fucking nuke the existing let_bind shit
+// TODO: Fucking nuke the existing let_bind shit and use declarations instead
 nonterminal functions_or_main, main_function, normal_function;
 nonterminal functions_or_global_declarations, functions, function_body;
 
