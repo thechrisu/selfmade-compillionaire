@@ -8,7 +8,7 @@ parser code {:
   public boolean  debug()         {return debug;}
   public void     debug(boolean b){debug = b;}
   public boolean  syntaxErrors;
-  private boolean debug = false;
+  private boolean debug = true;
 
   static class Node {
     public ArrayList<Node> children;
@@ -56,19 +56,53 @@ parser code {:
 
 // Do something with ILLEGAL_CHARARCTER or drop it.
 terminal INTEGER, IDENTIFIER, LET, EQUAL, SEMICOL, PLUS, MINUS, MULT, DIV;
+terminal LCURLY, RCURLY;
 terminal LPAREN, RPAREN;
-terminal BADCHAR;
+terminal BADCHAR; //TODO: Return this? When is it used?
+terminal PRINT, READ, MAIN, FDEF;
 
 nonterminal statements, statement, top_level;
 nonterminal let_bind, full_exp, simple_exp, operator;
+nonterminal print_statement, read_statement;
+// TODO: Fucking nuke the existing let_bind shit and use declarations instead
+nonterminal functions_or_main, main_function, normal_function;
+nonterminal functions_or_global_declarations, functions, function_body;
 
 precedence left PLUS, MINUS;
 precedence left DIV, MULT;
 
-top_level ::= statements:ss {:
-                if(debug()) System.out.println((Node)ss);
+top_level ::= functions_or_global_declarations:fog {:
+                if(debug()) System.out.println((Node)fog);
               :}
             ;
+
+// TODO: Add global variables to this
+functions_or_global_declarations ::= functions_or_main:fs {: RESULT = (Node) fs; :};
+
+
+main_function ::= MAIN function_body;
+
+functions_or_main ::= main_function functions
+                    | normal_function functions_or_main;
+
+functions ::= normal_function:f functions:fs {:
+                    // TODO: Fix node generation
+                    Node n = (Node)fs;
+                    n.addChild((Node)f);
+                    RESULT = n;
+               :}
+               | /* nuffin */ {: RESULT = new Node("Functions"); :}
+               ;
+
+// TODO: Add method parameters (a.k.a. function arguments)
+normal_function ::= FDEF IDENTIFIER:i function_body;
+
+// TODO: Add declaration between statements
+function_body ::= LCURLY statements:ss RCURLY SEMICOL {:
+    Node n = new Node("Function Body");
+    n.addChild((Node) ss);
+    RESULT = n;
+:};
 
 statements ::= statements:ss statement:s {:
                   Node n = (Node)ss;
@@ -86,6 +120,8 @@ statement ::= let_bind:s {:
             | full_exp:s {:
                 RESULT = (Node)s;
               :}
+             | read_statement:r {: RESULT = (Node) r; :}
+             | print_statement:p {: RESULT = (Node) p; :}
             ;
 
 full_exp ::= simple_exp:e SEMICOL {: RESULT = (Node)e; :};
@@ -106,6 +142,19 @@ simple_exp ::= INTEGER:i    {: RESULT = new Node(i); :}
                  RESULT = (Node)e;
                :}
              ;
+
+read_statement ::= READ IDENTIFIER:i SEMICOL {:
+                    Node n = new Node("READ");
+                    n.addChild(new Node(i));
+                    RESULT = n;
+                :}
+                ;
+print_statement ::= PRINT full_exp:e {:
+                    Node n = new Node("PRINT");
+                    n.addChild((Node) e);
+                    RESULT = n;
+                :}
+                ;
 
 operator ::= PLUS  {: RESULT = new Node("+"); :}
            | MINUS {: RESULT = new Node("-"); :}

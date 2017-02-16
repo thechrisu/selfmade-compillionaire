@@ -4,3 +4,7 @@ Problem: it is not clear whether we can omit both the start and end indices
 in sequence slicing, like "foo = bar[:]".
 Our solution: this is possible in many other languages that support list
 slicing (like Python), so our compiler accepts this syntax.
+
+Paragraph: 17
+Problem: It's ambiguous whether variables can be declared without initialisation.
+Our solution: The wording in the paragraph suggests that it is possible so we're assuming it is. (TODO: Update)

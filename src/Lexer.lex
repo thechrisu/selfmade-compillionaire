@@ -64,6 +64,10 @@ Integer = (0|[1-9]{Digit}*)
 
 %%
 <YYINITIAL> {
+  "read"           { return symbol(sym.READ);     }
+  "print"           { return symbol(sym.PRINT);     }
+  "main"           { return symbol(sym.MAIN);     }
+  "fdef"           { return symbol(sym.FDEF);     }
 
   "let"         { return symbol(sym.LET);        }
   {Integer}     { return symbol(sym.INTEGER,
@@ -79,6 +83,8 @@ Integer = (0|[1-9]{Digit}*)
   "/"           { return symbol(sym.DIV);        }
   "("           { return symbol(sym.LPAREN);     }
   ")"           { return symbol(sym.RPAREN);     }
+  "{"           { return symbol(sym.LCURLY);     }
+  "}"           { return symbol(sym.RCURLY);     }
 
 }
 
