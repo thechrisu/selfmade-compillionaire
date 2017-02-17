@@ -5,7 +5,7 @@ scan with {: return lexer.next_token(); :};
 
 parser code {:
 
-  public boolean  debug()         {return debug;}
+  public boolean  debug(){return debug;}
   public void     debug(boolean b){debug = b;}
   public boolean  syntaxErrors;
   private boolean debug = true;
