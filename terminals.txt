@@ -9,7 +9,7 @@ THe ones with dash in front are implemented as symbols
 -print
 -read
 -char
-bool
+-bool
 -int
 rat
 -float
@@ -24,7 +24,7 @@ if
 then
 else
 fi
-return
+-return
 null
 and &&
 negate !
@@ -36,11 +36,11 @@ langled <
 rangled >
 lcurly {
 rcurly }
-fdef
+-fdef
 semicol ;
-col :
-lparen (
-rparen )
+-colon :
+-lparen (
+-rparen )
 
 
 
