@@ -226,14 +226,19 @@ variable_declaration ::= IDENTIFIER:i COLON type:t {:
     RESULT = n;
 :};
 
-type ::= TYPE_BOOL {: RESULT = new Node("bool"); :}
-       | TYPE_CHAR {: RESULT = new Node("char"); :}
-       | TYPE_INT {: RESULT = new Node("int"); :}
-       | TYPE_RAT {: RESULT = new Node("rat"); :}
-       | TYPE_FLOAT {: RESULT = new Node("float"); :}
-       | TYPE_STRING {: RESULT = new Node("string"); :}
+type ::= TYPE_BOOL {: RESULT = new Node("BOOL"); :}
+       | TYPE_CHAR {: RESULT = new Node("CHAR"); :}
+       | TYPE_INT {: RESULT = new Node("INT"); :}
+       | TYPE_RAT {: RESULT = new Node("RAT"); :}
+       | TYPE_FLOAT {: RESULT = new Node("FLOAT"); :}
+       | TYPE_STRING {: RESULT = new Node("STRING"); :}
        | type_seq:s {: RESULT = (Node)s; :}
        | type_dict:d {: RESULT = (Node)d; :}
+       | IDENTIFIER:i {:
+            Node n = new Node("CUSTOM TYPE");
+            n.addChild((Node)i);
+            RESULT = n;
+       :}
        ;
 
 collection_type ::= type:t {: RESULT = (Node)t; :}

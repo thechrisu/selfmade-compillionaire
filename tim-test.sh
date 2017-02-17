@@ -20,6 +20,10 @@
 # running tests, and will abort testing if any of these 2 commands
 # fails.
 #
+# All files whose names begin with `p` should be parsed without errors,
+# `n` should cause your parser to throw errors and tests beginning with
+# `i` will be ignored.
+#
 # By default, looks for tests in `./tests/custom/` folder, you can
 # change this below. This script is also CI friendly as it reports
 # failed tests correctly. Example `.travis.yml`:
@@ -43,6 +47,7 @@ exit_code=0
 # Colors
 GREEN="\033[32m"
 YELLOW="\033[33m"
+GRAY="\033[37m"
 CYAN="\033[36m"
 RED="\033[31m"
 RESET="\033[0m"
@@ -50,6 +55,7 @@ RESET="\033[0m"
 # Stats
 success_tests=0
 fail_tests=0
+ignored_tests=0
 
 function usage {
     echo "usage: $program_name <mode> [path]"
@@ -92,7 +98,7 @@ function test_overview {
     else
         danger "Some tests failed!"
     fi
-    neutral "${success_tests} succeeded, ${fail_tests} failed."
+    neutral "${success_tests} succeeded, ${fail_tests} failed, ${ignored_tests} ignored."
     separator
 }
 
@@ -111,6 +117,9 @@ function danger {
 }
 function neutral {
     /bin/echo -e "$CYAN$1$RESET"
+}
+function disabled {
+    /bin/echo -e "$GRAY$1$RESET"
 }
 
 function count_tests {
@@ -198,6 +207,17 @@ function run_test_file {
 
     local out=$(eval "${command}" 2> ${temp_file})
     local err=$(cat ${temp_file})
+    if [ "$type" == "i" ]
+    then
+        ignored_tests=$((ignored_tests+1))
+        if [ -z "$last" ]
+        then
+            disabled "${indent}┣━━ IGNR $filename"
+        else
+            disabled "${indent}┗━━ IGNR $filename"
+        fi
+        return 0;
+    fi
     if [[ "$type" == "p" && "$out" == *"parsing successful"* ]] || [[ "$type" == "n" && ! "$out" == *"parsing successful"* ]]
     then
         success_tests=$((success_tests+1))
@@ -222,11 +242,9 @@ function run_test_file {
         then
             message="Was supposed to succeed but failed."
             output=${output}${err//$'\n'/\\n${symbol}${indent}}
-            #output=${err}
         else
             message="Was supposed to fail but succeeded."
             output=${output}${out//$'\n'/\\n${symbol}${indent}}
-            #output=${out}
         fi
         if [ -z "$last" ]
         then
