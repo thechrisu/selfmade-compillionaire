@@ -102,6 +102,8 @@ terminal MULTI_LINE_COMMENT, SINGLE_LINE_COMMENT; // /#...#/, #...
 // Variables and types
 nonterminal variable_decl_init, var_decl, type, type_decl;
 nonterminal type_seq, type_dict, collect_type;
+// Functions
+nonterminal normal_func_or_comment;
 // Comments
 nonterminal any_comment;
 
@@ -118,7 +120,7 @@ nonterminal stmnts, stmnt, top_level;
 nonterminal full_exp, simple_exp, operator;
 nonterminal print_statement, read_statement, return_statement;
 nonterminal funcs_or_main, main_func, normal_func, normal_func_body;
-nonterminal funcs_or_global_decls, funcs, func_param_decl, func_body_no_return, func_body_with_return;
+nonterminal funcs_or_global_decls, funcs_or_comments, func_param_decl, func_body_no_return, func_body_with_return;
 
 precedence left PLUS, MINUS;
 precedence left DIV, MULT;
@@ -127,8 +129,6 @@ top_level
 ::=
     funcs_or_global_decls:fog {: if(debug()) System.out.println((Node)fog); :}
 ;
-
-//any_comment ::=
 
 
 funcs_or_global_decls // TODO: Add global variables to this
@@ -145,16 +145,28 @@ main_func
   | MAIN func_body_no_return:fb {:RESULT=Node.n("MAIN_FUNC", fb);:}
 ;
 
+any_comment
+::=
+    SINGLE_LINE_COMMENT {:RESULT=Node.n("SINGLE_LINE_COMMENT");:}
+  | MULTI_LINE_COMMENT {:RESULT=Node.n("MULTI_LINE_COMMENT");:}
+;
+
 funcs_or_main
 ::=
-    main_func:mf funcs:fu {:RESULT=Node.n("MAIN_THEN_FUNC", mf, fu);:}
+    main_func:mf funcs_or_comments:fu {:RESULT=Node.n("MAIN_THEN_FUNC", mf, fu);:}
   | normal_func:nf funcs_or_main:fum {:RESULT=Node.n("FUNC_THEN_MAYBE_MAIN", nf, fum);:}
 ;
 
-funcs
+funcs_or_comments
 ::=
-    normal_func:f funcs:fs {:RESULT=Node.n("FUNC_THEN_FUNCS", f, fs);:}
+    normal_func_or_comment:f funcs_or_comments:fs {:RESULT=Node.n("FUNC_THEN_FUNCS", f, fs);:}
   | /* nuffin */ {:RESULT=Node.n("FUNCS_END");:}
+;
+
+normal_func_or_comment
+::=
+    any_comment:c {:RESULT=Node.n(c);:}
+  | normal_func:f {:RESULT=Node.n(f);:}
 ;
 
 // TODO: Add return param
@@ -193,10 +205,12 @@ stmnts
   | stmnt:s stmnts:ss {:RESULT=Node.n(s, ss);:}
 ;
 
-//TODO: Restrict return statement to functions with return type
+//TODO: Restrict return statement to functions with return type - Chris
+//TODO: ^ This todo is crap. Functions can return to interrupt their execution. - Tim
 stmnt
 ::=
-    variable_decl_init:s {:RESULT=Node.n(s);:}
+    any_comment:c {:RESULT=Node.n(c);:}
+  | variable_decl_init:s {:RESULT=Node.n(s);:}
   | full_exp:s {:RESULT=Node.n(s);:}
   | read_statement:r {:RESULT=Node.n(r);:}
   | print_statement:p {:RESULT=Node.n(p);:}

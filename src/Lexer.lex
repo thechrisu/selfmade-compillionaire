@@ -44,7 +44,7 @@ import java_cup.runtime.*;
       case sym.INTEGER:
         System.out.printf("INT %d", value); break;
       case sym.ID:
-        System.out.printf("IDENT %s", value); break;
+        System.out.printf("ID %s", value); break;
     }
     System.out.print(">  ");
   }
@@ -61,11 +61,11 @@ import java_cup.runtime.*;
 %}
 
 Newline = \r|\n|\r\n
+Whitespace = {Newline}|" "|"\t"
 
-MultiLineComment = (\/#.*?#\/)
+MultiLineComment = (\/#(.|{Whitespace})*?#\/)
 SingleLineComment = (#.*?({Newline}))
 
-Whitespace = {Newline}|" "|"\t"
 Letter = [a-zA-Z]
 Digit = [0-9]
 IdChar = {Letter} | {Digit} | "_"
@@ -83,8 +83,8 @@ CharVar = (\'{Char}\')
 //TODO: Allow other types of single quotes? (like)
 %%
 <YYINITIAL> {
-  {MultiLineComment}        { return symbol(sym.MULTI_LINE_COMMENT);         }
-  {SingleLineComment}        { return symbol(sym.SINGLE_LINE_COMMENT);         }
+  {MultiLineComment}     { return symbol(sym.MULTI_LINE_COMMENT);   }
+  {SingleLineComment}    { return symbol(sym.SINGLE_LINE_COMMENT);  }
 
   {Read}        { return symbol(sym.READ);         }
   {Print}       { return symbol(sym.PRINT);        }
@@ -111,7 +111,6 @@ CharVar = (\'{Char}\')
   {Identifier}  { return symbol(sym.ID, yytext());   }
 
   {Whitespace}  { /* do nothing */               }
-  {Whitespace}  { /* do nothing */               }
   ":="          { return symbol(sym.ASSIGN);     }
   "::"          { return symbol(sym.CONCAT);     }
   ":"           { return symbol(sym.COLON);      }
@@ -125,7 +124,6 @@ CharVar = (\'{Char}\')
   ")"           { return symbol(sym.RPAREN);     }
   "{"           { return symbol(sym.LCURLY);     }
   "}"           { return symbol(sym.RCURLY);     }
-
 }
 
 [^]  {
