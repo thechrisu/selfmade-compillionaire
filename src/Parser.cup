@@ -54,29 +54,45 @@ parser code {:
 
 :};
 
+/**
+  * TERMINALS
+  */
+
 // Bracket extravaganza
 terminal LPAREN, RPAREN; // ()
 terminal LCURLY, RCURLY; // {}
-
 // Arithemtic operators
 terminal PLUS, MINUS, MULT, DIV;
-
 // Comparions operators
 terminal EQ, LESS, LESS_EQ; // =, <, <=
-
 // Dictionaries and sequences (collections)
 terminal DICT_START, SEQ_START, COLLECT_END; // dict<, seq<, collect_end
-
+// Types
+terminal TYPE_BOOL, TYPE_CHAR, TYPE_INT, TYPE_RAT, TYPE_FLOAT, TYPE_STRING, TYPE_TOP;
 // Other operators
-terminal CONCOT, SEMICOL; // :, ;
+terminal CONCAT, SEMICOL, COLON, ASSIGN, COMMA; // ::, ;, :, :=, \,
+
+
+/**
+  * NON-TERMINALS
+  */
+
+// Variables and types
+nonterminal variable_declaration_initialisation, variable_declaration, type;
+nonterminal type_seq, type_dict, collection_type;
+
+
+/**
+  * OLD STUFF
+  */
 
 // Do something with ILLEGAL_CHARARCTER or drop it.
-terminal INTEGER, FLOAT, BOOL, CHAR, IDENTIFIER, LET, EQUAL;
+terminal INTEGER, FLOAT, BOOL, CHAR, IDENTIFIER, LET;
 terminal BADCHAR; //TODO: Return this? When is it used?
 terminal PRINT, READ, MAIN, FDEF;
 
 nonterminal statements, statement, top_level;
-nonterminal let_bind, full_exp, simple_exp, operator;
+nonterminal full_exp, simple_exp, operator;
 nonterminal print_statement, read_statement;
 // TODO: Fucking nuke the existing let_bind shit and use declarations instead
 nonterminal functions_or_main, main_function, normal_function;
@@ -144,7 +160,7 @@ statements ::= statements:ss statement:s {:
              | statement:s {: RESULT = (Node) s; :}
              ;
 
-statement ::= let_bind:s {:
+statement ::= variable_declaration_initialisation:s {:
                 RESULT = (Node)s;
               :}
             | full_exp:s {:
@@ -192,9 +208,48 @@ operator ::= PLUS  {: RESULT = new Node("+"); :}
            | DIV   {: RESULT = new Node("/"); :}
            ;
 
-let_bind ::= LET IDENTIFIER:i EQUAL full_exp:e {:
-               Node n = new Node("LET");
-               n.addChild(new Node(i));
-               n.addChild((Node)e);
-               RESULT = n;
-             :};
+variable_declaration_initialisation ::= variable_declaration:v ASSIGN full_exp:e {:
+                                            Node n = new Node("ASSIGNMENT");
+                                            n.addChild((Node)v);
+                                            n.addChild((Node)e);
+                                            RESULT = n;
+                                        :}
+                                      | variable_declaration:v SEMICOL {:
+                                            RESULT = (Node)v;
+                                        :}
+                                        ;
+
+variable_declaration ::= IDENTIFIER:i COLON type:t {:
+    Node n = new Node("DECLARATION");
+    n.addChild(new Node(i));
+    n.addChild((Node)t);
+    RESULT = n;
+:};
+
+type ::= TYPE_BOOL {: RESULT = new Node("bool"); :}
+       | TYPE_CHAR {: RESULT = new Node("char"); :}
+       | TYPE_INT {: RESULT = new Node("int"); :}
+       | TYPE_RAT {: RESULT = new Node("rat"); :}
+       | TYPE_FLOAT {: RESULT = new Node("float"); :}
+       | TYPE_STRING {: RESULT = new Node("string"); :}
+       | type_seq:s {: RESULT = (Node)s; :}
+       | type_dict:d {: RESULT = (Node)d; :}
+       ;
+
+collection_type ::= type:t {: RESULT = (Node)t; :}
+                  | TYPE_TOP {: RESULT = new Node("top"); :}
+                  ;
+
+type_seq ::= SEQ_START collection_type:t COLLECT_END {:
+    Node n = new Node("SEQUENCE");
+    n.addChild((Node)t);
+    RESULT = n;
+:};
+
+type_dict ::= DICT_START type:t1 COMMA collection_type:t2 COLLECT_END {:
+    Node n = new Node("DICTIONARY");
+    n.addChild((Node)t1);
+    n.addChild((Node)t2);
+    RESULT = n;
+:};
+
