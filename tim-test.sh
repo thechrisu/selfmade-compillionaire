@@ -2,10 +2,34 @@
 
 #######################################################################
 #
+# tim-test.sh - UCL CS COMP207P Test Runner
+# Timur Kuzhagaliyev 2017, https://foxypanda.me/
+#
+#######################################################################
+#
 # Description of this script:
 #
+# Run the script without any arguments to see help.
+#
 # This script recursively runs all tests from the specified directory
-# or file.
+# or file. If run on a directory, only runs tests from files with `.s`
+# extension.
+#
+# Put this script into the root folder of your COMP207P project (same
+# folder as `Makefile`). Script runs `make clean` and `make` before
+# running tests, and will abort testing if any of these 2 commands
+# fails.
+#
+# By default, looks for tests in `./tests/custom/` folder, you can
+# change this below. This script is also CI friendly as it reports
+# failed tests correctly. Example `.travis.yml`:
+#
+#    language: java
+#    jdk:
+#      - oraclejdk8
+#    script:
+#     - "cd $TRAVIS_BUILD_DIR"
+#     - "./tim-test.sh all"
 #
 #######################################################################
 
@@ -130,12 +154,12 @@ function run_test_dir {
         if [ -f "$testfile" ]
         then
             index=$((index+1))
-            local symbol="┣"
+            local last=""
             if [ "$index" -eq "$test_count" ]
             then
-                symbol="┗"
+                last="1"
             fi
-            run_test_file "$indent$symbol━━ " "$indent    ┗ " ${testfile}
+            run_test_file "$indent" ${testfile} ${last}
         fi
     done
     for testdir in $dir*/
@@ -149,20 +173,51 @@ function run_test_dir {
 
 function run_test_file {
     local indent=$1
-    local errindent=$2
-    local filepath=$3
+    local filepath=$2
+    local last=$3
     local filename=$(basename ${filepath})
     local type=${filename:0:1}
     local command="java -cp bin/:lib/java-cup-11b-runtime.jar SC $filepath"
 
-    out=$(eval "${command}" 2> ${temp_file})
-    err=$(cat ${temp_file})
+    local out=$(eval "${command}" 2> ${temp_file})
+    local err=$(cat ${temp_file})
     if [[ "$type" == "p" && "$out" == *"parsing successful"* ]] || [[ "$type" == "n" && ! "$out" == *"parsing successful"* ]]
     then
-        success "${indent}PASS $filename"
+        if [ -z "$last" ]
+        then
+            success "${indent}┣━━ PASS $filename"
+        else
+            success "${indent}┗━━ PASS $filename"
+        fi
     else
-        danger "${indent}FAIL $filename"
-        danger "${errindent}Error: $err"
+        local symbol="";
+        if [ -z "$last" ]
+        then
+            symbol="┃       "
+        else
+            symbol="        "
+        fi
+        local message=""
+        local output=${indent}${symbol}
+        if [ "$type" == "p" ]
+        then
+            message="Was supposed to succeed but failed."
+            output=${output}${err//$'\n'/\\n${symbol}${indent}}
+            #output=${err}
+        else
+            message="Was supposed to fail but succeeded."
+            output=${output}${out//$'\n'/\\n${symbol}${indent}}
+            #output=${out}
+        fi
+        if [ -z "$last" ]
+        then
+            danger "${indent}┣━┓ FAIL $filename"
+            danger "${indent}┃ ┗━━ Error: $message"
+        else
+            danger "${indent}┗━┓ FAIL $filename"
+            danger "${indent}  ┗━━ Error: $message"
+        fi
+        printf "$output\n"
         exit_code=1
     fi
 }
@@ -221,7 +276,7 @@ then
         echo "'$2' is not a file!"
         exit 1
     else
-        run_test_file "" "" $2
+        run_test_file "" $2
     fi
 fi
 
