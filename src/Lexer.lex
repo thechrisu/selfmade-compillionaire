@@ -19,7 +19,7 @@ import java_cup.runtime.*;
     switch(type){
       case sym.LET:
         System.out.print("LET"); break;
-      case sym.EQUAL:
+      case sym.ASSIGN:
         System.out.print(":="); break;
       case sym.SEMICOL:
         System.out.print(";"); break;
@@ -75,6 +75,16 @@ CharVar = (\'{Char}\')
   {Print}           { return symbol(sym.PRINT);  }
   "main"           { return symbol(sym.MAIN);    }
   "fdef"           { return symbol(sym.FDEF);    }
+  "bool"           { return symbol(sym.TYPE_BOOL);    }
+  "char"           { return symbol(sym.TYPE_CHAR);    }
+  "int"           { return symbol(sym.TYPE_INT);    }
+  "rat"           { return symbol(sym.TYPE_RAT);    }
+  "float"           { return symbol(sym.TYPE_FLOAT);    }
+  "string"           { return symbol(sym.TYPE_STRING);    }
+  "seq<"           { return symbol(sym.SEQ_START);    }
+  "dict<"           { return symbol(sym.DICT_START);    }
+  "top"           { return symbol(sym.TYPE_TOP);    }
+  ">"           { return symbol(sym.COLLECT_END);    }
 
   "let"         { return symbol(sym.LET);        }
   {CharVar}     { return symbol(sym.CHAR);       }
@@ -85,8 +95,11 @@ CharVar = (\'{Char}\')
   {Identifier}  { return symbol(sym.IDENTIFIER, yytext());   }
 
   {Whitespace}  { /* do nothing */               }
-  ":="          { return symbol(sym.EQUAL);      }
+  ":="          { return symbol(sym.ASSIGN);      }
+  "::"          { return symbol(sym.CONCAT);      }
+  ":"          { return symbol(sym.COLON);      }
   ";"           { return symbol(sym.SEMICOL);    }
+  ","           { return symbol(sym.COMMA);    }
   "+"           { return symbol(sym.PLUS);       }
   "-"           { return symbol(sym.MINUS);      }
   "*"           { return symbol(sym.MULT);       }
