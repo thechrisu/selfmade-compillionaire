@@ -125,7 +125,7 @@ precedence left DIV, MULT;
 
 top_level
 ::=
-funcs_or_global_decls:fog {: if(debug()) System.out.println((Node)fog); :}
+    funcs_or_global_decls:fog {: if(debug()) System.out.println((Node)fog); :}
 ;
 
 //any_comment ::=
