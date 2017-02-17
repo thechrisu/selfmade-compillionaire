@@ -24,14 +24,16 @@ parser code {:
       this.children = new ArrayList<Node>();
     }
 
-    public void addChild(Node n){ children.add(n); }
+    public void addChild(Node n){
+     System.out.println("adding " + n + " to " + value);
+     children.add(n); }
 
     public String toString(){
       String ret = "";
-      ret += String.format("%d [label=\"%s\"];\n",
+      ret += String.format("%d [label=\"%s\"];",
                             counter, value.toString());
       for(Node n: children){
-        ret += String.format("%d -> %d;\n", this.counter, n.counter);
+        ret += String.format("%d -> %d;", this.counter, n.counter);
         ret += n.toString();
       }
       return ret;
@@ -59,14 +61,16 @@ terminal INTEGER, FLOAT, BOOL, CHAR, IDENTIFIER, LET, EQUAL, SEMICOL, PLUS, MINU
 terminal LCURLY, RCURLY;
 terminal LPAREN, RPAREN;
 terminal BADCHAR; //TODO: Return this? When is it used?
-terminal PRINT, READ, MAIN, FDEF;
-
+terminal PRINT, READ, MAIN, FDEF, RETURN;
+terminal INTTYPE, RATTYPE, FLOATTYPE, BOOLTYPE, CHARTYPE, DICTTYPE, SEQTYPE;
+terminal COLON;
+nonterminal variable_type;
 nonterminal statements, statement, top_level;
 nonterminal let_bind, full_exp, simple_exp, operator;
-nonterminal print_statement, read_statement;
+nonterminal print_statement, read_statement, return_statement;
 // TODO: Fucking nuke the existing let_bind shit and use declarations instead
-nonterminal functions_or_main, main_function, normal_function;
-nonterminal functions_or_global_declarations, functions, function_body;
+nonterminal functions_or_main, main_function, normal_function, normal_function_body;
+nonterminal functions_or_global_declarations, functions, param_declaration, non_return_function_body, return_function_body;
 
 precedence left PLUS, MINUS;
 precedence left DIV, MULT;
@@ -79,57 +83,86 @@ top_level ::= functions_or_global_declarations:fog {:
 // TODO: Add global variables to this
 functions_or_global_declarations ::= functions_or_main:fs {: RESULT = (Node) fs; :};
 
-
-main_function ::= MAIN function_body:fb {:
+//TODO add empty return for main (or any function)
+//TODO add error code return for main
+main_function ::= MAIN param_declaration:p non_return_function_body:fb {:
+                          Node n = new Node("MainFunc");
+                          n.addChild((Node) p);
+                          n.addChild((Node) fb);
+                          RESULT = n;
+                    :}
+                | MAIN non_return_function_body:fb {:
                           Node n = new Node("MainFunc");
                           n.addChild((Node) fb);
                           RESULT = n;
-                    :};
+                    :}
+                ;
 
 functions_or_main ::= main_function:mf functions:fu {:
-                          Node n = (Node) mf;
+                          Node n = new Node("Main, then other funcs");
+                          n.addChild((Node) mf);
                           n.addChild((Node) fu);
                           RESULT = n;
                       :}
                     | normal_function:nf functions_or_main:fum {:
-                          Node n = (Node) nf;
+                          Node n = new Node("Normal func, then maybe main");
+                          n.addChild((Node) nf);
                           n.addChild((Node) fum);
                           RESULT = n;
                       :};
 
 functions ::= normal_function:f functions:fs {:
                     // TODO: Fix node generation
-                    Node n = (Node)fs;
-                    n.addChild((Node)f);
+                    Node n = (Node)f;
+                    n.addChild((Node)fs);
                     RESULT = n;
                :}
-               | /* nuffin */ {: RESULT = new Node("Functions"); :}
+               | /* nuffin */ {: RESULT = new Node("Functions (end)"); :}
                ;
 
-// TODO: Add method parameters (a.k.a. function arguments)
 // TODO: Add return param
-normal_function ::= FDEF IDENTIFIER:i function_body:fb {:
+normal_function ::= FDEF IDENTIFIER:i param_declaration:p normal_function_body:fb {:
                     Node n = new Node("FDef");
                     n.addChild((Node) i);
+                    n.addChild((Node) p);
                     n.addChild((Node) fb);
                     RESULT = (Node) n;
                     :};
 
-// TODO: Add declaration between statements
-function_body ::= LCURLY statements:ss RCURLY SEMICOL {:
-    Node n = new Node("Function Body");
-    n.addChild((Node) ss);
-    RESULT = n;
-:};
+//TODO add the actual args
+param_declaration ::= LPAREN RPAREN {: RESULT = new Node("Param Declaration"); :};
 
-statements ::= statements:ss statement:s {:
-                  Node n = (Node)ss;
-                  n.addChild((Node)s);
-                  RESULT = n;
-               :}
-             | statement:s {: RESULT = (Node) s; :}
+normal_function_body ::= non_return_function_body:n {: RESULT = (Node) n; :}
+                       | return_function_body:r {: RESULT = (Node) r; :}
+                       ;
+
+// TODO: Add declaration between statements
+non_return_function_body ::= LCURLY statements:ss RCURLY SEMICOL {:
+                    Node n = new Node("Function Body without return");
+                    n.addChild(new Node("LCURLY"));
+                    n.addChild((Node) ss);
+                    n.addChild(new Node("RCURLY"));
+                    n.addChild(new Node(";"));
+                    RESULT = n;
+                  :};
+
+return_function_body ::= LCURLY statements:ss RCURLY COLON variable_type:vt SEMICOL {:
+                         Node n = new Node("Function Body with return");
+                         n.addChild((Node) ss);
+                         n.addChild((Node) vt);
+                         RESULT = n;
+                         :}
+                     ;
+
+statements ::= statement:s {: RESULT = (Node) s; :}
+             | statement:s statements:ss {:
+                                 Node n = (Node)ss;
+                                 n.addChild((Node)s);
+                                 RESULT = n;
+                              :}
              ;
 
+//TODO: Restrict return statement to functions with return type
 statement ::= let_bind:s {:
                 RESULT = (Node)s;
               :}
@@ -138,6 +171,7 @@ statement ::= let_bind:s {:
               :}
              | read_statement:r {: RESULT = (Node) r; :}
              | print_statement:p {: RESULT = (Node) p; :}
+             | return_statement:re {: RESULT = (Node) re; :}
             ;
 
 full_exp ::= simple_exp:e SEMICOL {: RESULT = (Node)e; :};
@@ -155,7 +189,7 @@ simple_exp ::= INTEGER:i    {: RESULT = new Node(i); :}
                  n.addChild(new Node("("));
                  n.addChild((Node)e);
                  n.addChild(new Node(")"));
-                 RESULT = (Node)e;
+                 RESULT = e;
                :}
              ;
 
@@ -172,6 +206,13 @@ print_statement ::= PRINT full_exp:e {:
                 :}
                 ;
 
+return_statement ::= RETURN full_exp:e {:
+                    Node n = new Node("RETURN");
+                    n.addChild((Node) e);
+                    RESULT = n;
+                  :}
+                  ;
+
 operator ::= PLUS  {: RESULT = new Node("+"); :}
            | MINUS {: RESULT = new Node("-"); :}
            | MULT  {: RESULT = new Node("*"); :}
@@ -184,3 +225,14 @@ let_bind ::= LET IDENTIFIER:i EQUAL full_exp:e {:
                n.addChild((Node)e);
                RESULT = n;
              :};
+
+//TODO: Get dict/seq right when checking for type (currently its not correct)
+//TODO: Verify that functions which are supposed to return, say, int, actually return int
+variable_type ::= INTTYPE:i   {: RESULT = new Node("int");    :}
+                | RATTYPE:r   {: RESULT = new Node("rat");    :}
+                | FLOATTYPE:f {: RESULT = new Node("float");  :}
+                | BOOLTYPE:b  {: RESULT = new Node("bool");   :}
+                | CHARTYPE:c  {: RESULT = new Node("char");   :}
+                | DICTTYPE:d  {: RESULT = new Node("dict");   :}
+                | SEQTYPE:s   {: RESULT = new Node("seq");    :}
+                ;

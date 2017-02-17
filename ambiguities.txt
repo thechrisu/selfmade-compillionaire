@@ -17,13 +17,30 @@ Paragraph: 16
 Problem: It's not explicit whether functions may be completely empty (in the definition it says
 'body consists of local variable declarations (if any), followed by statements', note that this
 does not specify whether it's 0..* or 1..* statements)
-Solution: We only allow non-empty functions (similar to Python). In particular, main is not allowed to be empty
+Solution: We only allow non-empty functions (similar to Python), i.e. every function has to have
+1..* statements.
+In particular, main is not allowed to be empty and function declarations by the user are not allowed to be empty
 
 Paragraph: 15
 Problem: It's not clear whether one has to have parentheses around empty function parameter declarations,
 or whether only the main function is allowed not to have parentheses around its parameter declaration, because it is a shiny snowflake.
-Solution: TODO: Fix parameter declaration problem
+Solution: 'Normal' function declarations have to have parameter declaration parentheses, even
+ for empty parameter declarations. Main uses different rules: As per the spec, it is allowed to
+ omit the parentheses (to just have more elegant code). Alternatively, one is allowed to
+ place the parentheses. The reason for the latter decision is that people may want to choose
+ consistency and have parens in every function including main. In addition, in languages like C, one
+ can add commandline arguments, which are passed as parameters to the main function (these
+ may be added to the language later, as they are extreeeeeeeemely popular in other languages).
+ Thus, we cannot restrict main to not having parentheses at all.
+TODO: Tim/Keshav: What do you think about this chocie of ambiguity? Let's discuss
 
 Paragraph: 16
 Problem: The syntax around print/read is not clear: Should there just be a single space after the keyword?
-Solution: Yes. print and read require EXACTLY one space. Unlike Python, print() or read() is not allowed
+Solution: Yes. print and read require one or more whitespace characters (i.e. \r, \n, \r\n, " ", \t).
+ This solution is similar to Python 2, in which constructs like 'print                 0' are allowed.
+ Unlike Python, print() or read() is not allowed in our language.
+
+TODO verify that print() is not allowed and read() is not allowed
+TODO semicols at the end of funcs?
+TODO: "Empty" return allowed?
+TODO: Check for return type in func?a
