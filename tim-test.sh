@@ -2,40 +2,110 @@
 
 #######################################################################
 #
+# tim-test.sh - UCL CS COMP207P Test Runner
+# Timur Kuzhagaliyev 2017, https://foxypanda.me/
+#
+#######################################################################
+#
 # Description of this script:
 #
+# Run the script without any arguments to see help.
+#
 # This script recursively runs all tests from the specified directory
-# or file.
+# or file. If run on a directory, only runs tests from files with `.s`
+# extension.
+#
+# Put this script into the root folder of your COMP207P project (same
+# folder as `Makefile`). Script runs `make clean` and `make` before
+# running tests, and will abort testing if any of these 2 commands
+# fails.
+#
+# All files whose names begin with `p` should be parsed without errors,
+# `n` should cause your parser to throw errors and tests beginning with
+# `i` will be ignored.
+#
+# By default, looks for tests in `./tests/custom/` folder, you can
+# change this below. This script is also CI friendly as it reports
+# failed tests correctly. Example `.travis.yml`:
+#
+#    language: java
+#    jdk:
+#      - oraclejdk8
+#    script:
+#     - "cd $TRAVIS_BUILD_DIR"
+#     - "./tim-test.sh all"
 #
 #######################################################################
 
-programname=$0
-defaultdir="./tests/custom/"
-testtempfile="./test.temp"
+program_name=$0
+default_test_dir="./tests/custom/"
+temp_file="./test.temp"
 
 # Success by default
-exitcode=0
+exit_code=0
 
 # Colors
 GREEN="\033[32m"
 YELLOW="\033[33m"
+GRAY="\033[37m"
 CYAN="\033[36m"
 RED="\033[31m"
 RESET="\033[0m"
 
+# Stats
+success_tests=0
+fail_tests=0
+ignored_tests=0
+
 function usage {
-    echo "usage: $programname <mode> [path]"
+    echo "usage: $program_name <mode> [path]"
     echo "      <mode>  'all', 'dir' or 'one':"
-    echo "                  'all' - runs all tests from '$defaultdir'"
+    echo "                  'all' - runs all tests from '$default_test_dir'"
     echo "                  'dir' - runs all tests from directory at [path]"
     echo "                  'one' - runs test file at [path]"
     echo "      [path]   path to test directory or test file"
 }
 
-function pretest {
-    make clean
-    make
+function separator {
+    neutral "■━━━━━━━━━━━━━■"
 }
+
+function pre_test {
+    separator
+    neutral "Rebuilding project before testing..."
+    separator
+    echo ""
+    make clean
+    local clean_status=$?
+    make
+    local make_status=$?
+    if [ ${clean_status} -ne 0 ] || [ ${make_status} -ne 0 ]
+    then
+        neutral ""
+        separator
+        danger "Failed to make project! Testing aborted."
+        separator
+        exit 1
+    fi
+}
+
+function test_overview {
+    neutral ""
+    separator
+    if [ "$exit_code" == "0" ]
+    then
+        success "All tests succeeded!"
+    else
+        danger "Some tests failed!"
+    fi
+    neutral "${success_tests} succeeded, ${fail_tests} failed, ${ignored_tests} ignored."
+    separator
+}
+
+function post_test {
+    rm -f ${temp_file}
+}
+
 function success {
     /bin/echo -e "$GREEN$1$RESET"
 }
@@ -48,66 +118,144 @@ function danger {
 function neutral {
     /bin/echo -e "$CYAN$1$RESET"
 }
+function disabled {
+    /bin/echo -e "$GRAY$1$RESET"
+}
 
-function rundir {
-    local indent=$1
-    local newindent="  $indent"
-    local dir=$2
+function count_tests {
+    local dir=$1
+    local counter=0
+    for test_file in ${dir}*.s
+    do
+        if [ -f "${test_file}" ]
+        then
+            counter=$((counter+1))
+        fi
+    done
+    echo ${counter}
+}
 
-    # Add a trailing slash to `$dir` if it's not there
-    local dirlength=$((${#dir}-1))
-    local dirlastchar=${dir:$dirlength:1} 
-    if [ ! $dirlastchar == "/" ]
+function count_dirs {
+    local dir=$1
+    local counter=0
+    for test_dir in ${dir}*/
+    do
+        if [ -d "${test_dir}" ]
+        then
+            counter=$((counter+1))
+        fi
+    done
+    echo ${counter}
+}
+
+function ensure_trailing_slash {
+    local dir=$1
+    local dir_length=$((${#dir}-1))
+    local last_char=${dir:${dir_length}:1}
+    if [ ! ${last_char} == "/" ]
     then
         dir="$dir/"
     fi
+    echo ${dir}
+}
 
-    neutral "$indent┏$dir"
-    local counter=0
-    for testfile in $dir*.s
-    do
-        counter=$((counter+1))
-    done
+function run_test_dir {
+    local indent=$1
+    local dir=$(ensure_trailing_slash $2)
+
+    local test_count=$(count_tests ${dir})
+    local dir_count=$(count_dirs ${dir})
+    local symbol="┏"
+    if [ "$(($test_count+$dir_count))" -eq "0" ]
+    then
+        symbol="■"
+    fi
+
+    echo ""
+    neutral "$indent$symbol━■ $dir [$test_count tests]"
+
     local index=0
-    for testfile in $dir*.s
+    for testfile in ${dir}*.s
     do
         if [ -f "$testfile" ]
         then
             index=$((index+1))
-            local symbol="┣"
-            if [ "$index" -eq "$counter" ]
+            local last=""
+            if [ "$index" -eq "$test_count" ]
             then
-                symbol="┗"
+                last="1"
             fi
-            runfile "$indent$symbol━━ " "$indent    ┗ " $testfile 
+            run_test_file "$indent" ${testfile} ${last}
         fi
     done
     for testdir in $dir*/
     do
         if [ -d "$testdir" ]
         then
-            rundir "$newindent" $testdir
+            run_test_dir "  $indent" ${testdir}
         fi
     done
 }
 
-function runfile {
+function run_test_file {
     local indent=$1
-    local errindent=$2
-    local filepath=$3
-    local filename=$(basename $filepath)
+    local filepath=$2
+    local last=$3
+    local filename=$(basename ${filepath})
     local type=${filename:0:1}
     local command="java -cp bin/:lib/java-cup-11b-runtime.jar SC $filepath"
 
-    out=$(eval "$command" 2> $testtempfile)
-    err=$(cat $testtempfile)
+    local out=$(eval "${command}" 2> ${temp_file})
+    local err=$(cat ${temp_file})
+    if [ "$type" == "i" ]
+    then
+        ignored_tests=$((ignored_tests+1))
+        if [ -z "$last" ]
+        then
+            disabled "${indent}┣━━ IGNR $filename"
+        else
+            disabled "${indent}┗━━ IGNR $filename"
+        fi
+        return 0;
+    fi
     if [[ "$type" == "p" && "$out" == *"parsing successful"* ]] || [[ "$type" == "n" && ! "$out" == *"parsing successful"* ]]
     then
-        success "${indent}PASS $filename"
+        success_tests=$((success_tests+1))
+        if [ -z "$last" ]
+        then
+            success "${indent}┣━━ PASS $filename"
+        else
+            success "${indent}┗━━ PASS $filename"
+        fi
     else
-        danger "${indent}FAIL $filename"
-        danger "${errindent}Error: $err"
-        exitcode=1
+        fail_tests=$((fail_tests+1))
+        local symbol="";
+        if [ -z "$last" ]
+        then
+            symbol="┃       "
+        else
+            symbol="        "
+        fi
+        local message=""
+        local output=${indent}${symbol}
+        if [ "$type" == "p" ]
+        then
+            message="Was supposed to succeed but failed."
+            output=${output}${err//$'\n'/\\n${symbol}${indent}}
+        else
+            message="Was supposed to fail but succeeded."
+            output=${output}${out//$'\n'/\\n${symbol}${indent}}
+        fi
+        if [ -z "$last" ]
+        then
+            danger "${indent}┣━┓ FAIL $filename"
+            danger "${indent}┃ ┗━━ Error: $message"
+        else
+            danger "${indent}┗━┓ FAIL $filename"
+            danger "${indent}  ┗━━ Error: $message"
+        fi
+        printf "$output\n"
+        exit_code=1
     fi
 }
 
@@ -117,6 +265,7 @@ then
     usage
     exit 0
 fi
+
 
 # Check that the mode is correct
 if [ "$1" != "all" ] && [ "$1" != "dir" ] && [ "$1" != "one" ]
@@ -132,12 +281,16 @@ then
     exit 1
 fi
 
-pretest
+pre_test
+neutral ""
+separator
+neutral "Starting tests!"
+separator
 
 # Run all tests
 if [ "$1" == "all" ]
 then
-    rundir "" $defaultdir
+    run_test_dir "" ${default_test_dir}
 fi
 
 # Run tests dir
@@ -148,7 +301,7 @@ then
         echo "'$2' is not a directory!"
         exit 1
     else
-        rundir "" $2
+        run_test_dir "" $2
     fi
 fi
 
@@ -160,8 +313,11 @@ then
         echo "'$2' is not a file!"
         exit 1
     else
-        runfile "" "" $2
+        run_test_file "" $2
     fi
 fi
 
-exit $exitcode
+test_overview
+post_test
+
+exit ${exit_code}

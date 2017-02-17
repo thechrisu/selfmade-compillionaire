@@ -25,7 +25,7 @@ import java_cup.runtime.*;
         System.out.print("READ"); break;
       case sym.LET:
         System.out.print("LET"); break;
-      case sym.EQUAL:
+      case sym.ASSIGN:
         System.out.print(":="); break;
       case sym.COLON:
         System.out.print("COLON"); break;
@@ -80,20 +80,23 @@ CharVar = (\'{Char}\')
 //TODO: Allow other types of single quotes? (like)
 %%
 <YYINITIAL> {
-  "main"           { return symbol(sym.MAIN);    }
-  "fdef"           { return symbol(sym.FDEF);    }
-
-  "let"         { return symbol(sym.LET);        }
   {Read}           { return symbol(sym.READ);    }
   {Print}           { return symbol(sym.PRINT);  }
   {Return}         { return symbol(sym.RETURN);  }
-  "int"         { return symbol(sym.INTTYPE);    }
-  "rat"         { return symbol(sym.RATTYPE);    }
-  "float"         { return symbol(sym.FLOATTYPE);    }
-  "bool"         { return symbol(sym.BOOLTYPE);    }
-  "char"         { return symbol(sym.CHARTYPE);    }
-  "dict"         { return symbol(sym.DICTTYPE);    }
-  "seq"         { return symbol(sym.SEQTYPE);    }
+  "main"           { return symbol(sym.MAIN);    }
+  "fdef"           { return symbol(sym.FDEF);    }
+  "bool"           { return symbol(sym.TYPE_BOOL);    }
+  "char"           { return symbol(sym.TYPE_CHAR);    }
+  "int"           { return symbol(sym.TYPE_INT);    }
+  "rat"           { return symbol(sym.TYPE_RAT);    }
+  "float"           { return symbol(sym.TYPE_FLOAT);    }
+  "string"           { return symbol(sym.TYPE_STRING);    }
+  "seq<"           { return symbol(sym.SEQ_START);    }
+  "dict<"           { return symbol(sym.DICT_START);    }
+  "top"           { return symbol(sym.TYPE_TOP);    }
+  ">"           { return symbol(sym.COLLECT_END);    }
+
+  "let"         { return symbol(sym.LET);        }
   {CharVar}     { return symbol(sym.CHAR);       }
   {Integer}     { return symbol(sym.INTEGER,
                                 Integer.parseInt(yytext())); }
@@ -102,9 +105,11 @@ CharVar = (\'{Char}\')
   {Identifier}  { return symbol(sym.IDENTIFIER, yytext());   }
 
   {Whitespace}  { /* do nothing */               }
-  ":="          { return symbol(sym.EQUAL);      }
-  ":"           { return symbol(sym.COLON);      }
+  ":="          { return symbol(sym.ASSIGN);      }
+  "::"          { return symbol(sym.CONCAT);      }
+  ":"          { return symbol(sym.COLON);      }
   ";"           { return symbol(sym.SEMICOL);    }
+  ","           { return symbol(sym.COMMA);    }
   "+"           { return symbol(sym.PLUS);       }
   "-"           { return symbol(sym.MINUS);      }
   "*"           { return symbol(sym.MULT);       }
