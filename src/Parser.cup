@@ -280,7 +280,7 @@ type ::= TYPE_BOOL {: RESULT = new Node("BOOL"); :}
        | type_dict:d {: RESULT = (Node)d; :}
        | IDENTIFIER:i {:
             Node n = new Node("CUSTOM TYPE");
-            n.addChild((Node)i);
+            n.addChild(new Node(i));
             RESULT = n;
        :}
        ;
