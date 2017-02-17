@@ -23,8 +23,6 @@ import java_cup.runtime.*;
         System.out.print("PRINT"); break;
       case sym.READ:
         System.out.print("READ"); break;
-      case sym.LET:
-        System.out.print("LET"); break;
       case sym.ASSIGN:
         System.out.print(":="); break;
       case sym.COLON:
@@ -45,7 +43,7 @@ import java_cup.runtime.*;
         System.out.print(")"); break;
       case sym.INTEGER:
         System.out.printf("INT %d", value); break;
-      case sym.IDENTIFIER:
+      case sym.ID:
         System.out.printf("IDENT %s", value); break;
     }
     System.out.print(">  ");
@@ -104,14 +102,13 @@ CharVar = (\'{Char}\')
   "top"         { return symbol(sym.TYPE_TOP);     }
   ">"           { return symbol(sym.COLLECT_END);  }
 
-  "let"         { return symbol(sym.LET);                    }
   {CharVar}     { return symbol(sym.CHAR);                   }
   {Integer}     { return symbol(sym.INTEGER,
                                 Integer.parseInt(yytext())); }
   {Float}       { return symbol(sym.FLOAT,
                                 Float.parseFloat(yytext())); }
   {Bool}        { return symbol(sym.BOOL);                   }
-  {Identifier}  { return symbol(sym.IDENTIFIER, yytext());   }
+  {Identifier}  { return symbol(sym.ID, yytext());   }
 
   {Whitespace}  { /* do nothing */               }
   {Whitespace}  { /* do nothing */               }
