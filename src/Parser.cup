@@ -26,6 +26,22 @@ parser code {:
 
     public void addChild(Node n){ children.add(n); }
 
+    public static Node fromObject(Object o) {
+        Node node;
+        if(o instanceof Node) node = (Node) o;
+        else if(o instanceof String) node = new Node((String) o);
+        else node = new Node(o.toString());
+        return node;
+    }
+
+    public static Node n(Object object, Object... children) {
+        Node node = Node.fromObject(object);
+        for (Object child : children) {
+            node.addChild(Node.fromObject(child));
+        }
+        return node;
+    }
+
     public String toString(){
       String ret = "";
       ret += String.format("%d [label=\"%s\"];",
@@ -58,6 +74,10 @@ parser code {:
   * TERMINALS
   */
 
+// Identifier
+terminal ID;
+// Basic data representations
+terminal INTEGER, FLOAT, BOOL, CHAR;
 // Bracket extravaganza
 terminal LPAREN, RPAREN; // ()
 terminal LCURLY, RCURLY; // {}
@@ -71,6 +91,8 @@ terminal DICT_START, SEQ_START, COLLECT_END; // dict<, seq<, collect_end
 terminal TYPE_BOOL, TYPE_CHAR, TYPE_INT, TYPE_RAT, TYPE_FLOAT, TYPE_STRING, TYPE_TOP;
 // Other operators
 terminal CONCAT, SEMICOL, COLON, ASSIGN, COMMA; // ::, ;, :, :=, \,
+// Comments
+terminal MULTI_LINE_COMMENT, SINGLE_LINE_COMMENT; // /#...#/, #...
 
 
 /**
@@ -78,8 +100,10 @@ terminal CONCAT, SEMICOL, COLON, ASSIGN, COMMA; // ::, ;, :, :=, \,
   */
 
 // Variables and types
-nonterminal variable_declaration_initialisation, variable_declaration, type, type_declaration;
-nonterminal type_seq, type_dict, collection_type;
+nonterminal variable_decl_init, var_decl, type, type_decl;
+nonterminal type_seq, type_dict, collect_type;
+// Comments
+nonterminal any_comment;
 
 
 /**
@@ -87,218 +111,176 @@ nonterminal type_seq, type_dict, collection_type;
   */
 
 // Do something with ILLEGAL_CHARARCTER or drop it.
-terminal INTEGER, FLOAT, BOOL, CHAR, IDENTIFIER, LET;
 terminal BADCHAR; //TODO: Return this? When is it used?
 terminal PRINT, READ, RETURN, MAIN, FDEF;
 
-nonterminal statements, statement, top_level;
+nonterminal stmnts, stmnt, top_level;
 nonterminal full_exp, simple_exp, operator;
 nonterminal print_statement, read_statement, return_statement;
-nonterminal functions_or_main, main_function, normal_function, normal_function_body;
-nonterminal functions_or_global_declarations, functions, func_param_declaration, non_return_function_body, return_function_body;
+nonterminal funcs_or_main, main_func, normal_func, normal_func_body;
+nonterminal funcs_or_global_decls, funcs, func_param_decl, func_body_no_return, func_body_with_return;
 
 precedence left PLUS, MINUS;
 precedence left DIV, MULT;
 
-top_level ::= functions_or_global_declarations:fog {:
-                if(debug()) System.out.println((Node)fog);
-              :}
-            ;
+top_level
+::=
+    funcs_or_global_decls:fog {: if(debug()) System.out.println((Node)fog); :}
+;
 
-// TODO: Add global variables to this
-functions_or_global_declarations ::= functions_or_main:fs {: RESULT = (Node) fs; :};
+//any_comment ::=
+
+
+funcs_or_global_decls // TODO: Add global variables to this
+::=
+    funcs_or_main:fs {:RESULT=Node.n(fs);:}
+;
+
 
 //TODO add empty return for main (or any function)
 //TODO add error code return for main
-main_function ::= MAIN func_param_declaration:p non_return_function_body:fb {:
-                          Node n = new Node("MainFunc");
-                          n.addChild((Node) p);
-                          n.addChild((Node) fb);
-                          RESULT = n;
-                    :}
-                | MAIN non_return_function_body:fb {:
-                          Node n = new Node("MainFunc");
-                          n.addChild((Node) fb);
-                          RESULT = n;
-                    :}
-                ;
+main_func
+::=
+    MAIN func_param_decl:p func_body_no_return:fb {:RESULT=Node.n("MAIN_FUNC", p, fb);:}
+  | MAIN func_body_no_return:fb {:RESULT=Node.n("MAIN_FUNC", fb);:}
+;
 
-functions_or_main ::= main_function:mf functions:fu {:
-                          Node n = new Node("Main, then other funcs");
-                          n.addChild((Node) mf);
-                          n.addChild((Node) fu);
-                          RESULT = n;
-                      :}
-                    | normal_function:nf functions_or_main:fum {:
-                          Node n = new Node("Normal func, then maybe main");
-                          n.addChild((Node) nf);
-                          n.addChild((Node) fum);
-                          RESULT = n;
-                      :};
+funcs_or_main
+::=
+    main_func:mf funcs:fu {:RESULT=Node.n("MAIN_THEN_FUNC", mf, fu);:}
+  | normal_func:nf funcs_or_main:fum {:RESULT=Node.n("FUNC_THEN_MAYBE_MAIN", nf, fum);:}
+;
 
-functions ::= normal_function:f functions:fs {:
-                    // TODO: Fix node generation
-                    Node n = (Node)f;
-                    n.addChild((Node)fs);
-                    RESULT = n;
-               :}
-               | /* nuffin */ {: RESULT = new Node("Functions (end)"); :}
-               ;
+funcs
+::=
+    normal_func:f funcs:fs {:RESULT=Node.n("FUNC_THEN_FUNCS", f, fs);:}
+  | /* nuffin */ {:RESULT=Node.n("FUNCS_END");:}
+;
 
 // TODO: Add return param
-normal_function ::= FDEF IDENTIFIER:i func_param_declaration:p normal_function_body:fb {:
-                        Node n = new Node("FDef");
-                        n.addChild((Node) new Node(i));
-                        n.addChild((Node) p);
-                        n.addChild((Node) fb);
-                        RESULT = n;
-                    :};
+normal_func
+::=
+    FDEF ID:i func_param_decl:p normal_func_body:fb {:RESULT=Node.n("FDEF", i, p, fb);:}
+;
+
 
 //TODO add the actual args
-func_param_declaration ::= LPAREN RPAREN {: RESULT = new Node("Param Declaration"); :};
+func_param_decl
+::=
+    LPAREN RPAREN {:RESULT=Node.n("PARAM_DECL");:}
+;
 
-
-
-normal_function_body ::= non_return_function_body:n {: RESULT = (Node) n; :}
-                       | return_function_body:r {: RESULT = (Node) r; :}
-                       ;
+normal_func_body
+::=
+    func_body_no_return:n {:RESULT=Node.n(n);:}
+  | func_body_with_return:r{:RESULT=Node.n(r);:}
+;
 
 // TODO: Add declaration between statements
-non_return_function_body ::= LCURLY statements:ss RCURLY SEMICOL {:
-                    Node n = new Node("Function Body without return");
-                    n.addChild(new Node("LCURLY"));
-                    n.addChild((Node) ss);
-                    n.addChild(new Node("RCURLY"));
-                    n.addChild(new Node(";"));
-                    RESULT = n;
-                  :};
+func_body_no_return
+::=
+    LCURLY stmnts:ss RCURLY SEMICOL {:RESULT=Node.n("FUNC_BODY_NO_RETURN", ss);:}
+;
 
-return_function_body ::= LCURLY statements:ss RCURLY type_declaration:td SEMICOL {:
-                         Node n = new Node("Function Body with return");
-                         n.addChild((Node) ss);
-                         n.addChild((Node) td);
-                         RESULT = n;
-                         :}
-                     ;
+func_body_with_return
+::=
+    LCURLY stmnts:ss RCURLY type_decl:td SEMICOL {:RESULT=Node.n("FUNC_BODY_WITH_RETURN", ss, td);:}
+;
 
-statements ::= statement:s {: RESULT = (Node) s; :}
-             | statement:s statements:ss {:
-                                 Node n = (Node)ss;
-                                 n.addChild((Node)s);
-                                 RESULT = n;
-                              :}
-             ;
+stmnts
+::=
+    stmnt:s {:RESULT=Node.n(s);:}
+  | stmnt:s stmnts:ss {:RESULT=Node.n(s, ss);:}
+;
 
 //TODO: Restrict return statement to functions with return type
-statement ::= variable_declaration_initialisation:s {:
-                RESULT = (Node)s;
-              :}
-            | full_exp:s {:
-                RESULT = (Node)s;
-              :}
-             | read_statement:r {: RESULT = (Node) r; :}
-             | print_statement:p {: RESULT = (Node) p; :}
-             | return_statement:re {: RESULT = (Node) re; :}
-            ;
+stmnt
+::=
+    variable_decl_init:s {:RESULT=Node.n(s);:}
+  | full_exp:s {:RESULT=Node.n(s);:}
+  | read_statement:r {:RESULT=Node.n(r);:}
+  | print_statement:p {:RESULT=Node.n(p);:}
+  | return_statement:re {:RESULT=Node.n(re);:}
+;
 
-full_exp ::= simple_exp:e SEMICOL {: RESULT = (Node)e; :};
+full_exp
+::=
+    simple_exp:e SEMICOL {:RESULT=Node.n(e);:}
+;
 
-simple_exp ::= INTEGER:i    {: RESULT = new Node(i); :}
-             | IDENTIFIER:i {: RESULT = new Node(i); :}
-             | simple_exp:e1 operator:o simple_exp:e2 {:
-                  Node n = (Node)o;
-                  n.addChild((Node)e1);
-                  n.addChild((Node)e2);
-                  RESULT = n;
-               :}
-             | LPAREN simple_exp:e RPAREN {:
-                 Node n = new Node("parens");
-                 n.addChild(new Node("("));
-                 n.addChild((Node)e);
-                 n.addChild(new Node(")"));
-                 RESULT = e;
-               :}
-             ;
+simple_exp
+::=
+    INTEGER:i {:RESULT=Node.n(i);:}
+  | ID:i {:RESULT=Node.n(i);:}
+  | simple_exp:e1 operator:o simple_exp:e2 {:RESULT=Node.n(o, e1, e2);:}
+  | LPAREN simple_exp:e RPAREN {:RESULT=Node.n("PARENS", "(", e, ")");:}
+;
 
-read_statement ::= READ IDENTIFIER:i SEMICOL {:
-                    Node n = new Node("READ");
-                    n.addChild(new Node(i));
-                    RESULT = n;
-                :}
-                ;
-print_statement ::= PRINT full_exp:e {:
-                    Node n = new Node("PRINT");
-                    n.addChild((Node) e);
-                    RESULT = n;
-                :}
-                ;
+read_statement
+::=
+    READ ID:i SEMICOL {:RESULT=Node.n("READ", i);:}
+;
 
-return_statement ::= RETURN full_exp:e {:
-                    Node n = new Node("RETURN");
-                    n.addChild((Node) e);
-                    RESULT = n;
-                  :}
-                  ;
+print_statement
+::=
+    PRINT full_exp:e {:RESULT=Node.n("PRINT", e);:}
+;
 
-operator ::= PLUS  {: RESULT = new Node("+"); :}
-           | MINUS {: RESULT = new Node("-"); :}
-           | MULT  {: RESULT = new Node("*"); :}
-           | DIV   {: RESULT = new Node("/"); :}
-           ;
+return_statement
+::=
+    RETURN full_exp:e {:RESULT = Node.n("RETURN", e);:}
+;
 
-variable_declaration_initialisation ::= variable_declaration:v ASSIGN full_exp:e {:
-                                            Node n = new Node("ASSIGNMENT");
-                                            n.addChild((Node)v);
-                                            n.addChild((Node)e);
-                                            RESULT = n;
-                                        :}
-                                      | variable_declaration:v SEMICOL {:
-                                            RESULT = (Node)v;
-                                        :}
-                                        ;
+operator
+::=
+    PLUS  {:RESULT=Node.n("+");:}
+  | MINUS {:RESULT=Node.n("-");:}
+  | MULT  {:RESULT=Node.n("*");:}
+  | DIV   {:RESULT=Node.n("/");:}
+;
 
-variable_declaration ::= IDENTIFIER:i type_declaration:td {:
-    Node n = new Node("DECLARATION");
-    n.addChild(new Node(i));
-    n.addChild((Node)td);
-    RESULT = n;
-:};
+variable_decl_init
+::=
+    var_decl:v ASSIGN full_exp:e {:RESULT=Node.n("ASSIGNMENT", v, e);:}
+  | var_decl:v SEMICOL {:RESULT=Node.n(v);:}
+;
 
-type_declaration ::= COLON type:t {:
-                        Node n = new Node("TYPE DECLARATION");
-                        n.addChild((Node)t);
-                        RESULT = n;
-                     :};
+var_decl
+::=
+    ID:i type_decl:td {:RESULT=Node.n("DECLARATION", i ,td);:}
+;
 
-type ::= TYPE_BOOL {: RESULT = new Node("BOOL"); :}
-       | TYPE_CHAR {: RESULT = new Node("CHAR"); :}
-       | TYPE_INT {: RESULT = new Node("INT"); :}
-       | TYPE_RAT {: RESULT = new Node("RAT"); :}
-       | TYPE_FLOAT {: RESULT = new Node("FLOAT"); :}
-       | TYPE_STRING {: RESULT = new Node("STRING"); :}
-       | type_seq:s {: RESULT = (Node)s; :}
-       | type_dict:d {: RESULT = (Node)d; :}
-       | IDENTIFIER:i {:
-            Node n = new Node("CUSTOM TYPE");
-            n.addChild(new Node(i));
-            RESULT = n;
-       :}
-       ;
+type_decl
+::=
+    COLON type:t {:RESULT=Node.n("TYPE DECLARATION", t);:}
+;
 
-collection_type ::= type:t {: RESULT = (Node)t; :}
-                  | TYPE_TOP {: RESULT = new Node("TOP"); :}
-                  ;
+type
+::=
+    TYPE_BOOL {:RESULT=Node.n("BOOL");:}
+  | TYPE_CHAR {:RESULT=Node.n("CHAR");:}
+  | TYPE_INT {:RESULT=Node.n("INT");:}
+  | TYPE_RAT {:RESULT=Node.n("RAT");:}
+  | TYPE_FLOAT {:RESULT=Node.n("FLOAT");:}
+  | TYPE_STRING {:RESULT=Node.n("STRING");:}
+  | type_seq:s {:RESULT=Node.n(s);:}
+  | type_dict:d {:RESULT=Node.n(d);:}
+  | ID:i {:RESULT=Node.n("CUSTOM_TYPE", i);:}
+;
 
-type_seq ::= SEQ_START collection_type:t COLLECT_END {:
-    Node n = new Node("SEQUENCE");
-    n.addChild((Node)t);
-    RESULT = n;
-:};
+collect_type
+::=
+    type:t {:RESULT=Node.n(t);:}
+  | TYPE_TOP {:RESULT=Node.n("TOP");:}
+;
 
-type_dict ::= DICT_START type:t1 COMMA collection_type:t2 COLLECT_END {:
-    Node n = new Node("DICTIONARY");
-    n.addChild((Node)t1);
-    n.addChild((Node)t2);
-    RESULT = n;
-:};
+type_seq
+::=
+    SEQ_START collect_type:t COLLECT_END {:RESULT=Node.n("SEQ", t);:}
+;
+
+type_dict
+::=
+    DICT_START type:t1 COMMA collect_type:t2 COLLECT_END {:RESULT = Node.n("DICT", t1, t2);:}
+;
 

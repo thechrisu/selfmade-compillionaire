@@ -1,4 +1,4 @@
-#!/bin/bash 
+#!/usr/bin/env bash
 
 #######################################################################
 #
@@ -107,19 +107,19 @@ function post_test {
 }
 
 function success {
-    /bin/echo -e "$GREEN$1$RESET"
+    echo -e "$GREEN$1$RESET"
 }
 function warning {
-    /bin/echo -e "$YELLOW$1$RESET"
+    echo -e "$YELLOW$1$RESET"
 }
 function danger {
-    /bin/echo -e "$RED$1$RESET"
+    echo -e "$RED$1$RESET"
 }
 function neutral {
-    /bin/echo -e "$CYAN$1$RESET"
+    echo -e "$CYAN$1$RESET"
 }
 function disabled {
-    /bin/echo -e "$GRAY$1$RESET"
+    echo -e "$GRAY$1$RESET"
 }
 
 function count_tests {
@@ -270,14 +270,14 @@ fi
 # Check that the mode is correct
 if [ "$1" != "all" ] && [ "$1" != "dir" ] && [ "$1" != "one" ]
 then
-    echo "Invalid mode!"
+    danger "Invalid mode!"
     exit 1
 fi
 
 # Check that the amount of arguments is correct
 if [[ ("$1" == "dir" || "$1" == "one") && (! "$#" -eq 2) ]] || [[ "$1" == "all" && (! "$#" -eq 1) ]]
 then
-    echo "Invalid amount of arguments!"
+    danger "Invalid amount of arguments!"
     exit 1
 fi
 
@@ -298,7 +298,7 @@ if [ "$1" == "dir" ]
 then
     if [ ! -d "$2" ]
     then
-        echo "'$2' is not a directory!"
+        danger "'$2' is not a directory!"
         exit 1
     else
         run_test_dir "" $2
@@ -310,7 +310,7 @@ if [ "$1" == "one" ]
 then
     if [ ! -f "$2" ]
     then
-        echo "'$2' is not a file!"
+        danger "'$2' is not a file!"
         exit 1
     else
         run_test_file "" $2
