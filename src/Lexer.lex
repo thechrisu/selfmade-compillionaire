@@ -62,7 +62,8 @@ import java_cup.runtime.*;
 
 %}
 
-Whitespace = \r|\n|\r\n|" "|"\t"
+Newline = \r|\n|\r\n
+Whitespace = {Newline}|" "|"\t"
 Letter = [a-zA-Z]
 Digit = [0-9]
 IdChar = {Letter} | {Digit} | "_"
