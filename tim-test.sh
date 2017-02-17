@@ -47,6 +47,10 @@ CYAN="\033[36m"
 RED="\033[31m"
 RESET="\033[0m"
 
+# Stats
+success_tests=0
+fail_tests=0
+
 function usage {
     echo "usage: $program_name <mode> [path]"
     echo "      <mode>  'all', 'dir' or 'one':"
@@ -77,6 +81,19 @@ function pre_test {
         separator
         exit 1
     fi
+}
+
+function test_overview {
+    neutral ""
+    separator
+    if [ "$exit_code" == "0" ]
+    then
+        success "All tests succeeded!"
+    else
+        danger "Some tests failed!"
+    fi
+    neutral "${success_tests} succeeded, ${fail_tests} failed."
+    separator
 }
 
 function post_test {
@@ -183,6 +200,7 @@ function run_test_file {
     local err=$(cat ${temp_file})
     if [[ "$type" == "p" && "$out" == *"parsing successful"* ]] || [[ "$type" == "n" && ! "$out" == *"parsing successful"* ]]
     then
+        success_tests=$((success_tests+1))
         if [ -z "$last" ]
         then
             success "${indent}┣━━ PASS $filename"
@@ -190,6 +208,7 @@ function run_test_file {
             success "${indent}┗━━ PASS $filename"
         fi
     else
+        fail_tests=$((fail_tests+1))
         local symbol="";
         if [ -z "$last" ]
         then
@@ -280,6 +299,7 @@ then
     fi
 fi
 
+test_overview
 post_test
 
 exit ${exit_code}
