@@ -26,6 +26,22 @@ parser code {:
 
     public void addChild(Node n){ children.add(n); }
 
+    public static Node fromObject(Object o) {
+        Node node;
+        if(o instanceof Node) node = (Node) o;
+        else if(o instanceof String) node = new Node((String) o);
+        else node = new Node(o.toString());
+        return node;
+    }
+
+    public static Node fromObjects(Object object, Object... children) {
+        Node node = Node.fromObject(object);
+        for (Object child : children) {
+            node.addChild(Node.fromObject(child));
+        }
+        return node;
+    }
+
     public String toString(){
       String ret = "";
       ret += String.format("%d [label=\"%s\"];",
@@ -71,6 +87,8 @@ terminal DICT_START, SEQ_START, COLLECT_END; // dict<, seq<, collect_end
 terminal TYPE_BOOL, TYPE_CHAR, TYPE_INT, TYPE_RAT, TYPE_FLOAT, TYPE_STRING, TYPE_TOP;
 // Other operators
 terminal CONCAT, SEMICOL, COLON, ASSIGN, COMMA; // ::, ;, :, :=, \,
+// Comments
+terminal MULTI_LINE_COMMENT, SINGLE_LINE_COMMENT; // /#...#/, #...
 
 
 /**
@@ -80,6 +98,8 @@ terminal CONCAT, SEMICOL, COLON, ASSIGN, COMMA; // ::, ;, :, :=, \,
 // Variables and types
 nonterminal variable_declaration_initialisation, variable_declaration, type, type_declaration;
 nonterminal type_seq, type_dict, collection_type;
+// Comments
+nonterminal any_comment;
 
 
 /**
@@ -105,53 +125,37 @@ top_level ::= functions_or_global_declarations:fog {:
               :}
             ;
 
+//any_comment ::=
+
 // TODO: Add global variables to this
 functions_or_global_declarations ::= functions_or_main:fs {: RESULT = (Node) fs; :};
 
 //TODO add empty return for main (or any function)
 //TODO add error code return for main
 main_function ::= MAIN func_param_declaration:p non_return_function_body:fb {:
-                          Node n = new Node("MainFunc");
-                          n.addChild((Node) p);
-                          n.addChild((Node) fb);
-                          RESULT = n;
+                          RESULT = Node.fromObjects("MAIN_FUNC", p, fb);
                     :}
                 | MAIN non_return_function_body:fb {:
-                          Node n = new Node("MainFunc");
-                          n.addChild((Node) fb);
-                          RESULT = n;
+                          RESULT = Node.fromObjects("MAIN_FUNC", fb);
                     :}
                 ;
 
 functions_or_main ::= main_function:mf functions:fu {:
-                          Node n = new Node("Main, then other funcs");
-                          n.addChild((Node) mf);
-                          n.addChild((Node) fu);
-                          RESULT = n;
+                          RESULT = Node.fromObjects("MAIN_THEN_FUNC", mf, fu);
                       :}
                     | normal_function:nf functions_or_main:fum {:
-                          Node n = new Node("Normal func, then maybe main");
-                          n.addChild((Node) nf);
-                          n.addChild((Node) fum);
-                          RESULT = n;
+                          RESULT = Node.fromObjects("FUNC_THEN_MAYBE_MAIN", nf, fum);
                       :};
 
 functions ::= normal_function:f functions:fs {:
-                    // TODO: Fix node generation
-                    Node n = (Node)f;
-                    n.addChild((Node)fs);
-                    RESULT = n;
+                    RESULT = Node.fromObjects("FUNC_THEN_FUNCS", f, fs);
                :}
                | /* nuffin */ {: RESULT = new Node("Functions (end)"); :}
                ;
 
 // TODO: Add return param
 normal_function ::= FDEF IDENTIFIER:i func_param_declaration:p normal_function_body:fb {:
-                        Node n = new Node("FDef");
-                        n.addChild((Node) new Node(i));
-                        n.addChild((Node) p);
-                        n.addChild((Node) fb);
-                        RESULT = n;
+                        RESULT = Node.fromObjects("FDEF", i, p, fb);
                     :};
 
 //TODO add the actual args
@@ -165,27 +169,17 @@ normal_function_body ::= non_return_function_body:n {: RESULT = (Node) n; :}
 
 // TODO: Add declaration between statements
 non_return_function_body ::= LCURLY statements:ss RCURLY SEMICOL {:
-                    Node n = new Node("Function Body without return");
-                    n.addChild(new Node("LCURLY"));
-                    n.addChild((Node) ss);
-                    n.addChild(new Node("RCURLY"));
-                    n.addChild(new Node(";"));
-                    RESULT = n;
+                    RESULT = Node.fromObjects("FUNC_BODY_NO_RETURN", ss);
                   :};
 
 return_function_body ::= LCURLY statements:ss RCURLY type_declaration:td SEMICOL {:
-                         Node n = new Node("Function Body with return");
-                         n.addChild((Node) ss);
-                         n.addChild((Node) td);
-                         RESULT = n;
-                         :}
+                         RESULT = Node.fromObjects("FUNC_BODY_WITH_RETURN", ss, td);
+                     :}
                      ;
 
 statements ::= statement:s {: RESULT = (Node) s; :}
              | statement:s statements:ss {:
-                                 Node n = (Node)ss;
-                                 n.addChild((Node)s);
-                                 RESULT = n;
+                                 RESULT = Node.fromObjects(s, ss);
                               :}
              ;
 
@@ -206,37 +200,24 @@ full_exp ::= simple_exp:e SEMICOL {: RESULT = (Node)e; :};
 simple_exp ::= INTEGER:i    {: RESULT = new Node(i); :}
              | IDENTIFIER:i {: RESULT = new Node(i); :}
              | simple_exp:e1 operator:o simple_exp:e2 {:
-                  Node n = (Node)o;
-                  n.addChild((Node)e1);
-                  n.addChild((Node)e2);
-                  RESULT = n;
+                  RESULT = Node.fromObjects(o, e1, e2);
                :}
              | LPAREN simple_exp:e RPAREN {:
-                 Node n = new Node("parens");
-                 n.addChild(new Node("("));
-                 n.addChild((Node)e);
-                 n.addChild(new Node(")"));
-                 RESULT = e;
+                 RESULT = Node.fromObjects("PARENS", "(", e, ")");
                :}
              ;
 
 read_statement ::= READ IDENTIFIER:i SEMICOL {:
-                    Node n = new Node("READ");
-                    n.addChild(new Node(i));
-                    RESULT = n;
+                    RESULT = Node.fromObjects("READ", i);
                 :}
                 ;
 print_statement ::= PRINT full_exp:e {:
-                    Node n = new Node("PRINT");
-                    n.addChild((Node) e);
-                    RESULT = n;
+                    RESULT = Node.fromObjects("PRINT", e);
                 :}
                 ;
 
 return_statement ::= RETURN full_exp:e {:
-                    Node n = new Node("RETURN");
-                    n.addChild((Node) e);
-                    RESULT = n;
+                    RESULT = Node.fromObjects("RETURN", e);
                   :}
                   ;
 
@@ -247,10 +228,7 @@ operator ::= PLUS  {: RESULT = new Node("+"); :}
            ;
 
 variable_declaration_initialisation ::= variable_declaration:v ASSIGN full_exp:e {:
-                                            Node n = new Node("ASSIGNMENT");
-                                            n.addChild((Node)v);
-                                            n.addChild((Node)e);
-                                            RESULT = n;
+                                            RESULT = Node.fromObjects("ASSIGNMENT", v, e);
                                         :}
                                       | variable_declaration:v SEMICOL {:
                                             RESULT = (Node)v;
@@ -258,16 +236,11 @@ variable_declaration_initialisation ::= variable_declaration:v ASSIGN full_exp:e
                                         ;
 
 variable_declaration ::= IDENTIFIER:i type_declaration:td {:
-    Node n = new Node("DECLARATION");
-    n.addChild(new Node(i));
-    n.addChild((Node)td);
-    RESULT = n;
+    RESULT = Node.fromObjects("DECLARATION", i, td);
 :};
 
 type_declaration ::= COLON type:t {:
-                        Node n = new Node("TYPE DECLARATION");
-                        n.addChild((Node)t);
-                        RESULT = n;
+                        RESULT = Node.fromObjects("TYPE DECLARATION", t);
                      :};
 
 type ::= TYPE_BOOL {: RESULT = new Node("BOOL"); :}
@@ -278,11 +251,7 @@ type ::= TYPE_BOOL {: RESULT = new Node("BOOL"); :}
        | TYPE_STRING {: RESULT = new Node("STRING"); :}
        | type_seq:s {: RESULT = (Node)s; :}
        | type_dict:d {: RESULT = (Node)d; :}
-       | IDENTIFIER:i {:
-            Node n = new Node("CUSTOM TYPE");
-            n.addChild(new Node(i));
-            RESULT = n;
-       :}
+       | IDENTIFIER:i {: RESULT = Node.fromObjects("CUSTOM_TYPE", i); :}
        ;
 
 collection_type ::= type:t {: RESULT = (Node)t; :}
@@ -290,15 +259,10 @@ collection_type ::= type:t {: RESULT = (Node)t; :}
                   ;
 
 type_seq ::= SEQ_START collection_type:t COLLECT_END {:
-    Node n = new Node("SEQUENCE");
-    n.addChild((Node)t);
-    RESULT = n;
+    RESULT = Node.fromObjects("SEQUENCE", t);
 :};
 
 type_dict ::= DICT_START type:t1 COMMA collection_type:t2 COLLECT_END {:
-    Node n = new Node("DICTIONARY");
-    n.addChild((Node)t1);
-    n.addChild((Node)t2);
-    RESULT = n;
+    RESULT = Node.fromObjects("DICTIONARY", t1, t2);
 :};
 

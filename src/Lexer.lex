@@ -63,6 +63,10 @@ import java_cup.runtime.*;
 %}
 
 Newline = \r|\n|\r\n
+
+MultiLineComment = (\/#.*?#\/)
+SingleLineComment = (#.*?({Newline}))
+
 Whitespace = {Newline}|" "|"\t"
 Letter = [a-zA-Z]
 Digit = [0-9]
@@ -81,6 +85,9 @@ CharVar = (\'{Char}\')
 //TODO: Allow other types of single quotes? (like)
 %%
 <YYINITIAL> {
+  {MultiLineComment}        { return symbol(sym.MULTI_LINE_COMMENT);         }
+  {SingleLineComment}        { return symbol(sym.SINGLE_LINE_COMMENT);         }
+
   {Read}        { return symbol(sym.READ);         }
   {Print}       { return symbol(sym.PRINT);        }
   {Return}      { return symbol(sym.RETURN);       }
@@ -106,6 +113,7 @@ CharVar = (\'{Char}\')
   {Bool}        { return symbol(sym.BOOL);                   }
   {Identifier}  { return symbol(sym.IDENTIFIER, yytext());   }
 
+  {Whitespace}  { /* do nothing */               }
   {Whitespace}  { /* do nothing */               }
   ":="          { return symbol(sym.ASSIGN);     }
   "::"          { return symbol(sym.CONCAT);     }
