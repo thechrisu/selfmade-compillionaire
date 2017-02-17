@@ -2,4 +2,4 @@ main {
   print 1;
 };
 
-fdef a ( ) {  print 0;};
+fdef zero () {  print 0; };

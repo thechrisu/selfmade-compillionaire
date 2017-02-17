@@ -78,7 +78,7 @@ terminal CONCAT, SEMICOL, COLON, ASSIGN, COMMA; // ::, ;, :, :=, \,
   */
 
 // Variables and types
-nonterminal variable_declaration_initialisation, variable_declaration, type;
+nonterminal variable_declaration_initialisation, variable_declaration, type, type_declaration;
 nonterminal type_seq, type_dict, collection_type;
 
 
@@ -94,9 +94,8 @@ terminal PRINT, READ, RETURN, MAIN, FDEF;
 nonterminal statements, statement, top_level;
 nonterminal full_exp, simple_exp, operator;
 nonterminal print_statement, read_statement, return_statement;
-// TODO: Fucking nuke the existing let_bind shit and use declarations instead
 nonterminal functions_or_main, main_function, normal_function, normal_function_body;
-nonterminal functions_or_global_declarations, functions, param_declaration, non_return_function_body, return_function_body;
+nonterminal functions_or_global_declarations, functions, func_param_declaration, non_return_function_body, return_function_body;
 
 precedence left PLUS, MINUS;
 precedence left DIV, MULT;
@@ -111,7 +110,7 @@ functions_or_global_declarations ::= functions_or_main:fs {: RESULT = (Node) fs;
 
 //TODO add empty return for main (or any function)
 //TODO add error code return for main
-main_function ::= MAIN param_declaration:p non_return_function_body:fb {:
+main_function ::= MAIN func_param_declaration:p non_return_function_body:fb {:
                           Node n = new Node("MainFunc");
                           n.addChild((Node) p);
                           n.addChild((Node) fb);
@@ -147,16 +146,18 @@ functions ::= normal_function:f functions:fs {:
                ;
 
 // TODO: Add return param
-normal_function ::= FDEF IDENTIFIER:i param_declaration:p normal_function_body:fb {:
-                    Node n = new Node("FDef");
-                    n.addChild((Node) i);
-                    n.addChild((Node) p);
-                    n.addChild((Node) fb);
-                    RESULT = (Node) n;
+normal_function ::= FDEF IDENTIFIER:i func_param_declaration:p normal_function_body:fb {:
+                        Node n = new Node("FDef");
+                        n.addChild((Node) new Node(i));
+                        n.addChild((Node) p);
+                        n.addChild((Node) fb);
+                        RESULT = n;
                     :};
 
 //TODO add the actual args
-param_declaration ::= LPAREN RPAREN {: RESULT = new Node("Param Declaration"); :};
+func_param_declaration ::= LPAREN RPAREN {: RESULT = new Node("Param Declaration"); :};
+
+
 
 normal_function_body ::= non_return_function_body:n {: RESULT = (Node) n; :}
                        | return_function_body:r {: RESULT = (Node) r; :}
@@ -172,10 +173,10 @@ non_return_function_body ::= LCURLY statements:ss RCURLY SEMICOL {:
                     RESULT = n;
                   :};
 
-return_function_body ::= LCURLY statements:ss RCURLY COLON type:vt SEMICOL {:
+return_function_body ::= LCURLY statements:ss RCURLY type_declaration:td SEMICOL {:
                          Node n = new Node("Function Body with return");
                          n.addChild((Node) ss);
-                         n.addChild((Node) vt);
+                         n.addChild((Node) td);
                          RESULT = n;
                          :}
                      ;
@@ -256,12 +257,18 @@ variable_declaration_initialisation ::= variable_declaration:v ASSIGN full_exp:e
                                         :}
                                         ;
 
-variable_declaration ::= IDENTIFIER:i COLON type:t {:
+variable_declaration ::= IDENTIFIER:i type_declaration:td {:
     Node n = new Node("DECLARATION");
     n.addChild(new Node(i));
-    n.addChild((Node)t);
+    n.addChild((Node)td);
     RESULT = n;
 :};
+
+type_declaration ::= COLON type:t {:
+                        Node n = new Node("TYPE DECLARATION");
+                        n.addChild((Node)t);
+                        RESULT = n;
+                     :};
 
 type ::= TYPE_BOOL {: RESULT = new Node("BOOL"); :}
        | TYPE_CHAR {: RESULT = new Node("CHAR"); :}
@@ -279,7 +286,7 @@ type ::= TYPE_BOOL {: RESULT = new Node("BOOL"); :}
        ;
 
 collection_type ::= type:t {: RESULT = (Node)t; :}
-                  | TYPE_TOP {: RESULT = new Node("top"); :}
+                  | TYPE_TOP {: RESULT = new Node("TOP"); :}
                   ;
 
 type_seq ::= SEQ_START collection_type:t COLLECT_END {:

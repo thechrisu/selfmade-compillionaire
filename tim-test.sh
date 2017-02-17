@@ -166,7 +166,7 @@ function run_test_dir {
     local test_count=$(count_tests ${dir})
     local dir_count=$(count_dirs ${dir})
     local symbol="┏"
-    if [ "$(($test_count+$dir_count))" -eq "0" ]
+    if [ "$(($test_count))" -eq "0" ]
     then
         symbol="■"
     fi
@@ -241,10 +241,10 @@ function run_test_file {
         if [ "$type" == "p" ]
         then
             message="Was supposed to succeed but failed."
-            output=${output}${err//$'\n'/\\n${symbol}${indent}}
+            output=${output}${err//$'\n'/\\n${indent}${symbol}${indent}}
         else
             message="Was supposed to fail but succeeded."
-            output=${output}${out//$'\n'/\\n${symbol}${indent}}
+            output=${output}${out//$'\n'/\\n${indent}${symbol}${indent}}
         fi
         if [ -z "$last" ]
         then

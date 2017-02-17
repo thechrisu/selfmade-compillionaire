@@ -18,8 +18,8 @@ class SC {
 				
 				
 			} catch (Exception e) {
-				// Commented out because this output is uniformative.  ETB
-				//e.printStackTrace();
+				// TODO: COMMENT THIS OUT IN PRODUCTION!
+				e.printStackTrace();
 			}
 		} catch (FileNotFoundException e1) {
 			// TODO Auto-generated catch block
