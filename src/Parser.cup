@@ -81,6 +81,7 @@ terminal INTEGER, FLOAT, BOOL, CHAR;
 // Bracket extravaganza
 terminal LPAREN, RPAREN; // ()
 terminal LCURLY, RCURLY; // {}
+terminal LSQUAR, RSQUAR; // []
 // Arithemtic operators
 terminal PLUS, MINUS, MULT, DIV;
 // Comparions operators

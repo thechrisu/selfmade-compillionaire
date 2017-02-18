@@ -124,6 +124,8 @@ CharVar = (\'{Char}\')
   ")"           { return symbol(sym.RPAREN);     }
   "{"           { return symbol(sym.LCURLY);     }
   "}"           { return symbol(sym.RCURLY);     }
+  "["           { return symbol(sym.LSQUAR);     }
+  "]"           { return symbol(sym.RSQUAR);     }
 }
 
 [^]  {
