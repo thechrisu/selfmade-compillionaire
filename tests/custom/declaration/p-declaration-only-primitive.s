@@ -1,5 +1,5 @@
 main {
     a : int;
     s : string;
-    d : char;
+    d_0 : char;
 };

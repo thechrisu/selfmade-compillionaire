@@ -1,0 +1,3 @@
+main {
+    z:char := 'da';
+};

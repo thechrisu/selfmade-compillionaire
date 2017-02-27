@@ -1,0 +1,3 @@
+main {
+    X:seq<int> := ;
+};
