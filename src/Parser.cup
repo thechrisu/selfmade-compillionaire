@@ -94,7 +94,22 @@ terminal CONCAT, SEMICOL, COLON, ASSIGN, COMMA; // ::, ;, :, :=, \,
 // Comments
 terminal MULTI_LINE_COMMENT, SINGLE_LINE_COMMENT; // /#...#/, #...
 
-
+// TODO: Test that function actually returns something of that type (i.e. if func is supposed to have return type int, check there's return int somewhere)
+// TODO: Test for allowed/disallowed ASCII characters as string/char AND for variable names
+// TODO: Test for function calls/predicates before call
+// TODO: Test for capital s in seq, and variations of this
+// TODO: Implication
+// TODO: Seq length checking
+// TODO: Rationals
+// TODO: Loop
+// TODO: If
+// TODO: Break
+// TODO: Test Function calls
+// TODO: Don't allow keywords as e.g. function names
+// TODO: Check for fields access (e.g. p.age)
+// TODO: Assignment to custom type
+// TODO: Null value
+// TODO: Alias
 /**
   * NON-TERMINALS
   */
