@@ -104,6 +104,8 @@ nonterminal variable_decl_init, var_decl, type, type_decl;
 nonterminal type_seq, type_dict, collect_type;
 // Comments
 nonterminal any_comment;
+// Parameters
+nonterminal top_level_formal_parameter_list, formal_parameter_list, formal_parameter;
 
 
 /**
@@ -167,7 +169,18 @@ normal_func
 //TODO add the actual args
 func_param_decl
 ::=
-    LPAREN RPAREN {:RESULT=Node.n("PARAM_DECL");:}
+    LPAREN top_level_formal_parameter_list RPAREN {:RESULT=Node.n("PARAM_DECL");:}
+;
+
+top_level_formal_parameter_list
+::=
+    formal_parameter_list:ne {:RESULT=Node.n(ne);:}
+   | /* nuffin */ {:RESULT=Node.n("NO_PARAMS");:}
+;
+
+formal_parameter_list
+::= var_decl:f COMMA formal_parameter_list:fl {:RESULT=Node.n("NON_ENDING_PARAMS_LIST", f, fl);:}
+   | var_decl:f {:RESULT=Node.n(f);:}
 ;
 
 normal_func_body
