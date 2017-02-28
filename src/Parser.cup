@@ -81,17 +81,18 @@ terminal INTEGER, FLOAT, BOOL, CHAR;
 // Bracket extravaganza
 terminal LPAREN, RPAREN; // ()
 terminal LCURLY, RCURLY; // {}
-terminal LSQUAR, RSQUAR; // []
+terminal LSQUARE, RSQUARE; // []
+terminal LANGLE, RANGLE; // <>
 // Arithemtic operators
 terminal PLUS, MINUS, MULT, DIV;
 // Comparions operators
 terminal EQ, LESS, LESS_EQ; // =, <, <=
 // Dictionaries and sequences (collections)
-terminal DICT_START, SEQ_START, COLLECT_END; // dict<, seq<, collect_end
+terminal DICT, SEQ; // dict, seq
 // Types
 terminal TYPE_BOOL, TYPE_CHAR, TYPE_INT, TYPE_RAT, TYPE_FLOAT, TYPE_STRING, TYPE_TOP;
 // Other operators
-terminal CONCAT, SEMICOL, COLON, ASSIGN, COMMA; // ::, ;, :, :=, \,
+terminal CONCAT, SEMICOL, COLON, ASSIGN, COMMA, UNDERSCORE; // ::, ;, :, :=, \,, _
 // Comments
 terminal MULTI_LINE_COMMENT, SINGLE_LINE_COMMENT; // /#...#/, #...
 
@@ -125,7 +126,10 @@ nonterminal normal_func_or_comment;
 nonterminal any_comment;
 // Parameters
 nonterminal top_level_formal_parameter_list, formal_parameter_list, formal_parameter;
-
+// Sequence
+nonterminal seq_definition, no_trailing_comma_expressions, zero_or_more_comma_separated_expressions;
+// Dict
+nonterminal dict_definition, no_trailing_comma_k_v_pairs, zero_or_more_k_v_pairs, dict_element;
 
 /**
   * OLD STUFF
@@ -134,7 +138,6 @@ nonterminal top_level_formal_parameter_list, formal_parameter_list, formal_param
 // Do something with ILLEGAL_CHARARCTER or drop it.
 terminal BADCHAR; //TODO: Return this? When is it used?
 terminal PRINT, READ, RETURN, MAIN, FDEF;
-
 nonterminal stmnts, stmnt, top_level;
 nonterminal full_exp, simple_exp, operator;
 nonterminal print_statement, read_statement, return_statement;
@@ -201,17 +204,6 @@ func_param_decl
     LPAREN top_level_formal_parameter_list RPAREN {:RESULT=Node.n("PARAM_DECL");:}
 ;
 
-top_level_formal_parameter_list
-::=
-    formal_parameter_list:ne {:RESULT=Node.n(ne);:}
-   | /* nuffin */ {:RESULT=Node.n("NO_PARAMS");:}
-;
-
-formal_parameter_list
-::= var_decl:f COMMA formal_parameter_list:fl {:RESULT=Node.n("NON_ENDING_PARAMS_LIST", f, fl);:}
-   | var_decl:f {:RESULT=Node.n(f);:}
-;
-
 normal_func_body
 ::=
     func_body_no_return:n {:RESULT=Node.n(n);:}
@@ -252,13 +244,57 @@ full_exp
     simple_exp:e SEMICOL {:RESULT=Node.n(e);:}
 ;
 
+//TODO: Describe syntax of rationals in ambiguities.txt
 simple_exp
 ::=
     INTEGER:i {:RESULT=Node.n(i);:}
+  | INTEGER:i UNDERSCORE INTEGER:j DIV INTEGER:k {:RESULT=Node.n("MIXED_RAT", i, j, k);:}
   | BOOL:i {:RESULT=Node.n(i);:}
   | ID:i {:RESULT=Node.n(i);:}
+  | seq_definition:s {:RESULT=Node.n(s);:}
+  | dict_definition:d {:RESULT=Node.n(d);:}
   | simple_exp:e1 operator:o simple_exp:e2 {:RESULT=Node.n(o, e1, e2);:}
   | LPAREN simple_exp:e RPAREN {:RESULT=Node.n("PARENS", "(", e, ")");:}
+;
+
+seq_definition
+::=
+    LSQUARE zero_or_more_comma_separated_expressions:exp RSQUARE {:RESULT=Node.n("SEQ_DEF", exp);:}
+;
+
+//TODO: Say in ambiguities.txt that we allow expressions in seq's
+zero_or_more_comma_separated_expressions
+::=
+    no_trailing_comma_expressions:ne {:RESULT=Node.n(ne);:}
+   | /* nuffin */ {:RESULT=Node.n("EMPTY_SEQ");:}
+;
+
+no_trailing_comma_expressions
+::=
+     simple_exp:e COMMA no_trailing_comma_expressions:es {:RESULT=Node.n("NON_ENDING_COMMA_LIST", e, es);:}
+   | simple_exp:e {:RESULT=Node.n(e);:}
+;
+
+dict_definition
+::=
+   LCURLY zero_or_more_k_v_pairs:kv RCURLY {:RESULT=Node.n("DICT_DEF", kv);:}
+;
+
+zero_or_more_k_v_pairs
+::=
+    no_trailing_comma_k_v_pairs:kv {: RESULT=Node.n(kv); :}
+  | /* nuffin */ {:RESULT=Node.n("EMPTY_DICT");:}
+;
+
+no_trailing_comma_k_v_pairs
+::=
+     dict_element:kv COMMA no_trailing_comma_k_v_pairs:kvs {:RESULT=Node.n("NON_ENDING_KV_LIST", kv, kvs);:}
+   | dict_element:kv {:RESULT=Node.n(kv);:}
+
+;
+
+dict_element
+::= simple_exp:k COLON simple_exp:v {:RESULT=Node.n("DICT_ELEM", k, v);:}
 ;
 
 read_statement
@@ -321,11 +357,11 @@ collect_type
 
 type_seq
 ::=
-    SEQ_START collect_type:t COLLECT_END {:RESULT=Node.n("SEQ", t);:}
+    SEQ LANGLE collect_type:t RANGLE {:RESULT=Node.n("SEQ", t);:}
 ;
 
 type_dict
 ::=
-    DICT_START type:t1 COMMA collect_type:t2 COLLECT_END {:RESULT = Node.n("DICT", t1, t2);:}
+    DICT LANGLE type:t1 COMMA collect_type:t2 RANGLE {:RESULT = Node.n("DICT", t1, t2);:}
 ;
 

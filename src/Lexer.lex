@@ -41,6 +41,8 @@ import java_cup.runtime.*;
         System.out.print("("); break;
       case sym.RPAREN:
         System.out.print(")"); break;
+      case sym.UNDERSCORE:
+        System.out.print("_"); break;
       case sym.INTEGER:
         System.out.printf("INT %d", value); break;
       case sym.ID:
@@ -99,10 +101,9 @@ CharVar = (\'{Char}\')
   "rat"         { return symbol(sym.TYPE_RAT);     }
   "float"       { return symbol(sym.TYPE_FLOAT);   }
   "string"      { return symbol(sym.TYPE_STRING);  }
-  "seq<"        { return symbol(sym.SEQ_START);    }
-  "dict<"       { return symbol(sym.DICT_START);   }
+  "seq"        { return symbol(sym.SEQ);    }
+  "dict"       { return symbol(sym.DICT);   }
   "top"         { return symbol(sym.TYPE_TOP);     }
-  ">"           { return symbol(sym.COLLECT_END);  }
 
   {CharVar}     { return symbol(sym.CHAR);                   }
   {Integer}     { return symbol(sym.INTEGER,
@@ -116,6 +117,7 @@ CharVar = (\'{Char}\')
   ":="          { return symbol(sym.ASSIGN);     }
   "::"          { return symbol(sym.CONCAT);     }
   ":"           { return symbol(sym.COLON);      }
+  "_"           { return symbol(sym.UNDERSCORE);      }
   ";"           { return symbol(sym.SEMICOL);    }
   ","           { return symbol(sym.COMMA);      }
   "+"           { return symbol(sym.PLUS);       }
@@ -126,8 +128,10 @@ CharVar = (\'{Char}\')
   ")"           { return symbol(sym.RPAREN);     }
   "{"           { return symbol(sym.LCURLY);     }
   "}"           { return symbol(sym.RCURLY);     }
-  "["           { return symbol(sym.LSQUAR);     }
-  "]"           { return symbol(sym.RSQUAR);     }
+  "["           { return symbol(sym.LSQUARE);    }
+  "]"           { return symbol(sym.RSQUARE);    }
+  "<"           { return symbol(sym.LANGLE);    }
+  ">"           { return symbol(sym.RANGLE);    }
 }
 
 [^]  {
