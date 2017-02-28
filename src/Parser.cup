@@ -110,6 +110,7 @@ terminal MULTI_LINE_COMMENT, SINGLE_LINE_COMMENT; // /#...#/, #...
 // TODO: Assignment to custom type
 // TODO: Null value
 // TODO: Alias
+// TODO: Are declarations only allowed before main?
 /**
   * NON-TERMINALS
   */
@@ -239,6 +240,7 @@ full_exp
 simple_exp
 ::=
     INTEGER:i {:RESULT=Node.n(i);:}
+  | BOOL:i {:RESULT=Node.n(i);:}
   | ID:i {:RESULT=Node.n(i);:}
   | simple_exp:e1 operator:o simple_exp:e2 {:RESULT=Node.n(o, e1, e2);:}
   | LPAREN simple_exp:e RPAREN {:RESULT=Node.n("PARENS", "(", e, ")");:}
