@@ -94,7 +94,22 @@ terminal CONCAT, SEMICOL, COLON, ASSIGN, COMMA; // ::, ;, :, :=, \,
 // Comments
 terminal MULTI_LINE_COMMENT, SINGLE_LINE_COMMENT; // /#...#/, #...
 
-
+// TODO: Test that function actually returns something of that type (i.e. if func is supposed to have return type int, check there's return int somewhere)
+// TODO: Test for allowed/disallowed ASCII characters as string/char AND for variable names
+// TODO: Test for function calls/predicates before call
+// TODO: Test for capital s in seq, and variations of this
+// TODO: Implication
+// TODO: Seq length checking
+// TODO: Rationals
+// TODO: Loop
+// TODO: If
+// TODO: Break
+// TODO: Test Function calls
+// TODO: Don't allow keywords as e.g. function names
+// TODO: Check for fields access (e.g. p.age)
+// TODO: Assignment to custom type
+// TODO: Null value
+// TODO: Alias
 /**
   * NON-TERMINALS
   */
@@ -104,6 +119,8 @@ nonterminal variable_decl_init, var_decl, type, type_decl;
 nonterminal type_seq, type_dict, collect_type;
 // Comments
 nonterminal any_comment;
+// Parameters
+nonterminal top_level_formal_parameter_list, formal_parameter_list, formal_parameter;
 
 
 /**
@@ -167,7 +184,18 @@ normal_func
 //TODO add the actual args
 func_param_decl
 ::=
-    LPAREN RPAREN {:RESULT=Node.n("PARAM_DECL");:}
+    LPAREN top_level_formal_parameter_list RPAREN {:RESULT=Node.n("PARAM_DECL");:}
+;
+
+top_level_formal_parameter_list
+::=
+    formal_parameter_list:ne {:RESULT=Node.n(ne);:}
+   | /* nuffin */ {:RESULT=Node.n("NO_PARAMS");:}
+;
+
+formal_parameter_list
+::= var_decl:f COMMA formal_parameter_list:fl {:RESULT=Node.n("NON_ENDING_PARAMS_LIST", f, fl);:}
+   | var_decl:f {:RESULT=Node.n(f);:}
 ;
 
 normal_func_body

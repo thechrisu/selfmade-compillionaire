@@ -44,3 +44,20 @@ TODO verify that print() is not allowed and read() is not allowed
 TODO semicols at the end of funcs?
 TODO: "Empty" return allowed?
 TODO: Check for return type in func?a
+
+TODO: Partial function application?
+TODO: Global vars: Only mentions global variable DECLARATION, not that assignment is possible (however, its possible in most languages)
+TODO: Ints accept hexadecimal notation? (0x...)?
+TODO: What types are printable?
+TODO: Can you assign floats to int vars and ints to float variables?
+TODO: Can you assign rats to ints? Ints to rats?
+TODO: Whitespace in assign (i.e. is ':            =' possible?)
+TODO: Is i++ possible? ++i?
+TODO: Do we allow 1+-1 (== 0), and 1/-1 (== -1)? --> look at tests/custom/expressions/numbers!
+TODO: Character can contain ASCII except digits
+TODO: Can variables not start with underscore?
+TODO: Say we cannot check for type correctness in frontend of compiler (i.e. one may assign a string value to an int variable?)
+TODO: Mixing boolean and arithmetic expressions (e.g. ((1 + 1) or T))
+TODO: Array slicing: Are expressions allowed for slice indices?
+TODO: In spec, only smaller/smaller-eq is mentioned. Surely, you want greater and greater equal?
+TODO: Is empty tdef ok? (see test)
