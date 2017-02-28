@@ -77,7 +77,7 @@ Identifier = {Letter}{IdChar}*
 Integer = (-?{Digit}+)
 Float = (-?{Digit}+\.{Digit}+)
 //TODO what format to have for floats? e.g. do we allow -.1 for -.0.1,
-Bool = (T|F)
+Bool = (T |F)
 Char = ([a-zA-Z\x21-\x40\x5b-\x60\x7b-\x7e])
 //TODO: Test for allowed/disallowed chars
 Print = (print{Whitespace}+)

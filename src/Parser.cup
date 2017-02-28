@@ -218,7 +218,6 @@ stmnts
 stmnt
 ::=
     variable_decl_init:s {:RESULT=Node.n(s);:}
-  | full_exp:s {:RESULT=Node.n(s);:}
   | read_statement:r {:RESULT=Node.n(r);:}
   | print_statement:p {:RESULT=Node.n(p);:}
   | return_statement:re {:RESULT=Node.n(re);:}
