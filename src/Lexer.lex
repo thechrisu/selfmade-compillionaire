@@ -130,6 +130,8 @@ CharVar = (\'{Char}\')
   ")"           { return symbol(sym.RPAREN);     }
   "{"           { return symbol(sym.LCURLY);     }
   "}"           { return symbol(sym.RCURLY);     }
+  "["           { return symbol(sym.LSQUARE);    }
+  "]"           { return symbol(sym.RSQUARE);    }
 
 }
 
