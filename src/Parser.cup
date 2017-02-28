@@ -118,7 +118,7 @@ terminal MULTI_LINE_COMMENT, SINGLE_LINE_COMMENT; // /#...#/, #...
   */
 
 // Variables and types
-nonterminal variable_decl_init, var_decl, type, type_decl;
+nonterminal variable_decl_init, var_decl, type, maybe_type_decl, type_decl;
 nonterminal type_seq, type_dict, collect_type;
 // Functions
 nonterminal normal_func_or_comment;
@@ -322,7 +322,8 @@ operator
 
 variable_decl_init
 ::=
-    var_decl:v ASSIGN full_exp:e {:RESULT=Node.n("ASSIGNMENT", v, e);:}
+    ID:i ASSIGN full_exp:e {:RESULT=Node.n("ASSIGNMENT", i, e);:}
+  | var_decl:v ASSIGN full_exp:e {:RESULT=Node.n("ASSIGNMENT", v, e);:}
   | var_decl:v SEMICOL {:RESULT=Node.n(v);:}
 ;
 
