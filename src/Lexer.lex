@@ -45,6 +45,8 @@ import java_cup.runtime.*;
         System.out.printf("INT %d", value); break;
       case sym.ID:
         System.out.printf("ID %s", value); break;
+      case sym.BOOL:
+          System.out.printf("BOOL %s", value); break;
     }
     System.out.print(">  ");
   }
@@ -107,7 +109,7 @@ CharVar = (\'{Char}\')
                                 Integer.parseInt(yytext())); }
   {Float}       { return symbol(sym.FLOAT,
                                 Float.parseFloat(yytext())); }
-  {Bool}        { return symbol(sym.BOOL);                   }
+  {Bool}        { return symbol(sym.BOOL, yytext());                   }
   {Identifier}  { return symbol(sym.ID, yytext());   }
 
   {Whitespace}  { /* do nothing */               }

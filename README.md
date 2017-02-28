@@ -15,3 +15,5 @@ To run on a single test file, issue `./bin/sc tests/open/<some test>.s`
 ## Running custom tests
 
 Use `tim-test.sh` scripts in this repository. Run `./tim-test.sh all` to recursively execute all custom tests.
+
+TODO: Test for position of syntax error (say, when there's a semicolon missing!)
