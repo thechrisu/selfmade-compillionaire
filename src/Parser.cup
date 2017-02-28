@@ -90,7 +90,7 @@ terminal DICT_START, SEQ_START, COLLECT_END; // dict<, seq<, collect_end
 // Types
 terminal TYPE_BOOL, TYPE_CHAR, TYPE_INT, TYPE_RAT, TYPE_FLOAT, TYPE_STRING, TYPE_TOP;
 // Other operators
-terminal CONCAT, SEMICOL, COLON, ASSIGN, COMMA; // ::, ;, :, :=, \,
+terminal CONCAT, SEMICOL, COLON, ASSIGN, COMMA, UNDERSCORE; // ::, ;, :, :=, \,, _
 // Comments
 terminal MULTI_LINE_COMMENT, SINGLE_LINE_COMMENT; // /#...#/, #...
 
@@ -237,9 +237,11 @@ full_exp
     simple_exp:e SEMICOL {:RESULT=Node.n(e);:}
 ;
 
+//TODO: Describe syntax of rationals in ambiguities.txt
 simple_exp
 ::=
     INTEGER:i {:RESULT=Node.n(i);:}
+  | INTEGER:i UNDERSCORE INTEGER:j DIV INTEGER:k {:RESULT=Node.n("MIXED_RAT", i, j, k);:}
   | BOOL:i {:RESULT=Node.n(i);:}
   | ID:i {:RESULT=Node.n(i);:}
   | simple_exp:e1 operator:o simple_exp:e2 {:RESULT=Node.n(o, e1, e2);:}
