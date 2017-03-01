@@ -105,7 +105,7 @@ StringVar = (\"({Char}|(\\(\\|\")))*\")
   "seq"         { return symbol(sym.SEQ);         }
   "dict"        { return symbol(sym.DICT);        }
   "top"         { return symbol(sym.TYPE_TOP);    }
-
+  "in"          { return symbol(sym.IN);          }
   {CharVar}     { return symbol(sym.CHAR);                   }
   {StringVar}   { return symbol(sym.STRING);                 }
   {Integer}     { return symbol(sym.INTEGER,
