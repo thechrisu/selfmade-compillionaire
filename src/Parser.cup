@@ -204,6 +204,17 @@ func_param_decl
     LPAREN top_level_formal_parameter_list RPAREN {:RESULT=Node.n("PARAM_DECL");:}
 ;
 
+top_level_formal_parameter_list
+::=
+    formal_parameter_list:ne {:RESULT=Node.n(ne);:}
+   | /* nuffin */ {:RESULT=Node.n("NO_PARAMS");:}
+;
+
+formal_parameter_list
+::= var_decl:f COMMA formal_parameter_list:fl {:RESULT=Node.n("NON_ENDING_PARAMS_LIST", f, fl);:}
+   | var_decl:f {:RESULT=Node.n(f);:}
+;
+
 normal_func_body
 ::=
     func_body_no_return:n {:RESULT=Node.n(n);:}
@@ -230,7 +241,7 @@ stmnts
 stmnt
 ::=
     variable_decl_init:s {:RESULT=Node.n(s);:}
-    any_comment:c {:RESULT=Node.n(c);:}
+  | any_comment:c {:RESULT=Node.n(c);:}
   | read_statement:r {:RESULT=Node.n(r);:}
   | print_statement:p {:RESULT=Node.n(p);:}
   | return_statement:re {:RESULT=Node.n(re);:}
