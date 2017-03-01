@@ -1,11 +1,9 @@
-fdef something() {
-  print "IMPORTANT";
-};
+
+fdef someT(){ print "SOMETHING"; };
 
 main {
   print 0;
 };
 
-fdef somethingElse() {
-  print "MORE IMPORTANT";
-};
+
+fdef zero () { print 0; };

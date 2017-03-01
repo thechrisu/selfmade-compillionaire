@@ -180,9 +180,9 @@ any_comment
 
 funcs_or_main
 ::=
-    main_func:mf global_declarations:fu {:RESULT=Node.n("MAIN_THEN_FUNC", mf, fu);:}
-  | global_declaration_except_main:gd funcs_or_main:fum {:RESULT=Node.n("DECL_THEN_MAYBE_MAIN", gd, fum);:}
-;
+   global_declarations:gd1  main_func:mf global_declarations:gd2 {:RESULT=Node.n("MAIN_THEN_FUNC", gd1, mf, gd2);:};
+//  | global_declaration_except_main:gd funcs_or_main:fum {:RESULT=Node.n("DECL_THEN_MAYBE_MAIN", gd, fum);:}
+//;
 
 global_declarations
 ::=
@@ -261,6 +261,7 @@ full_exp
 simple_exp
 ::=
     INTEGER:i {:RESULT=Node.n(i);:}
+  | FLOAT:i {:RESULT=Node.n(i);:}
   | INTEGER:i UNDERSCORE INTEGER:j DIV INTEGER:k {:RESULT=Node.n("MIXED_RAT", i, j, k);:}
   | CHAR:i {:RESULT=Node.n("CHARVAR");:}
   | STRING:i {:RESULT=Node.n("STRING");:}
