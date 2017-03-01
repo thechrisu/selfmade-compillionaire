@@ -113,6 +113,7 @@ terminal MULTI_LINE_COMMENT, SINGLE_LINE_COMMENT; // /#...#/, #...
 // TODO: Null value
 // TODO: Alias
 // TODO: Are declarations only allowed before main?
+// TODO: Power
 /**
   * NON-TERMINALS
   */
@@ -256,6 +257,7 @@ simple_exp
     INTEGER:i {:RESULT=Node.n(i);:}
   | INTEGER:i UNDERSCORE INTEGER:j DIV INTEGER:k {:RESULT=Node.n("MIXED_RAT", i, j, k);:}
   | BOOL:i {:RESULT=Node.n(i);:}
+  | CHAR:i {:RESULT=Node.n("CHARVAR");:}
   | ID:i {:RESULT=Node.n(i);:}
   | seq_definition:s {:RESULT=Node.n(s);:}
   | dict_definition:d {:RESULT=Node.n(d);:}
