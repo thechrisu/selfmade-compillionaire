@@ -1,4 +1,4 @@
 
 main {
-  seq<char> := "";
+  a:seq<char> := "a";
 };

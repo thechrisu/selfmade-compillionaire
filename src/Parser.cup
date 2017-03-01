@@ -86,7 +86,7 @@ terminal LCURLY, RCURLY; // {}
 terminal LSQUARE, RSQUARE; // []
 terminal LANGLE, RANGLE; // <>
 // Arithemtic operators
-terminal PLUS, MINUS, MULT, DIV;
+terminal PLUS, MINUS, MULT, DIV, POW;
 // Comparions operators
 terminal EQ, LESS, LESS_EQ; // =, <, <=
 // Dictionaries and sequences (collections)
@@ -115,7 +115,6 @@ terminal MULTI_LINE_COMMENT, SINGLE_LINE_COMMENT; // /#...#/, #...
 // TODO: Null value
 // TODO: Alias
 // TODO: Are declarations only allowed before main?
-// TODO: Power
 /**
   * NON-TERMINALS
   */
@@ -151,6 +150,7 @@ nonterminal funcs_or_global_decls, global_declarations, func_param_decl, func_bo
 
 precedence left PLUS, MINUS;
 precedence left DIV, MULT;
+precedence left POW;
 
 top_level
 ::=
@@ -360,6 +360,7 @@ operator
   | MINUS {:RESULT=Node.n("-");:}
   | MULT  {:RESULT=Node.n("*");:}
   | DIV   {:RESULT=Node.n("/");:}
+  | POW   {:RESULT=Node.n("^");:}
 ;
 
 variable_decl_init

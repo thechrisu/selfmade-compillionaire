@@ -109,9 +109,9 @@ StringVar = (\"({Char}|(\\(\\|\")))*\")
   {CharVar}     { return symbol(sym.CHAR);                   }
   {StringVar}   { return symbol(sym.STRING);                 }
   {Integer}     { return symbol(sym.INTEGER,
-                                Integer.parseInt(yytext())); }
+                                yytext()); }
   {Float}       { return symbol(sym.FLOAT,
-                                Float.parseFloat(yytext())); }
+                                yytext()); }
   {Bool}        { return symbol(sym.BOOL, yytext());         }
   {Identifier}  { return symbol(sym.ID, yytext());           }
 
@@ -129,6 +129,7 @@ StringVar = (\"({Char}|(\\(\\|\")))*\")
   "+"           { return symbol(sym.PLUS);       }
   "-"           { return symbol(sym.MINUS);      }
   "*"           { return symbol(sym.MULT);       }
+  "^"           { return symbol(sym.POW);        }
   "/"           { return symbol(sym.DIV);        }
   "("           { return symbol(sym.LPAREN);     }
   ")"           { return symbol(sym.RPAREN);     }
