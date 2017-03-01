@@ -1,0 +1,3 @@
+main {
+  d:seq<char> := "";
+};

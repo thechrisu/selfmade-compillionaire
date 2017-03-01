@@ -77,7 +77,9 @@ parser code {:
 // Identifier
 terminal ID;
 // Basic data representations
-terminal INTEGER, FLOAT, BOOL, CHAR;
+terminal INTEGER, FLOAT, BOOL, CHAR, STRING;
+// Boolean
+terminal NOT, AND, OR, IMPLIC;
 // Bracket extravaganza
 terminal LPAREN, RPAREN; // ()
 terminal LCURLY, RCURLY; // {}
@@ -119,7 +121,7 @@ terminal MULTI_LINE_COMMENT, SINGLE_LINE_COMMENT; // /#...#/, #...
   */
 
 // Variables and types
-nonterminal variable_decl_init, var_decl, type, type_decl;
+nonterminal variable_decl_init, var_decl, type, maybe_type_decl, type_decl;
 nonterminal type_seq, type_dict, collect_type;
 // Functions
 nonterminal normal_func_or_comment;
@@ -131,6 +133,8 @@ nonterminal top_level_formal_parameter_list, formal_parameter_list, formal_param
 nonterminal seq_definition, no_trailing_comma_expressions, zero_or_more_comma_separated_expressions;
 // Dict
 nonterminal dict_definition, no_trailing_comma_k_v_pairs, zero_or_more_k_v_pairs, dict_element;
+// Boolean
+nonterminal bool_expr, evaluates_to_bool, evaluates_to_bool_or_id, bool_oper;
 
 /**
   * OLD STUFF
@@ -249,6 +253,7 @@ stmnt
 full_exp
 ::=
     simple_exp:e SEMICOL {:RESULT=Node.n(e);:}
+  | bool_expr:be SEMICOL {:RESULT=Node.n(be);:}
 ;
 
 //TODO: Describe syntax of rationals in ambiguities.txt
@@ -256,13 +261,40 @@ simple_exp
 ::=
     INTEGER:i {:RESULT=Node.n(i);:}
   | INTEGER:i UNDERSCORE INTEGER:j DIV INTEGER:k {:RESULT=Node.n("MIXED_RAT", i, j, k);:}
-  | BOOL:i {:RESULT=Node.n(i);:}
   | CHAR:i {:RESULT=Node.n("CHARVAR");:}
+  | STRING:i {:RESULT=Node.n("STRING");:}
   | ID:i {:RESULT=Node.n(i);:}
   | seq_definition:s {:RESULT=Node.n(s);:}
   | dict_definition:d {:RESULT=Node.n(d);:}
   | simple_exp:e1 operator:o simple_exp:e2 {:RESULT=Node.n(o, e1, e2);:}
   | LPAREN simple_exp:e RPAREN {:RESULT=Node.n("PARENS", "(", e, ")");:}
+;
+
+bool_expr
+::=
+   evaluates_to_bool:etb {:RESULT=Node.n(etb);:}
+ | evaluates_to_bool_or_id:etb1 bool_oper:bo evaluates_to_bool_or_id:etb2 {:RESULT=Node.n(bo, etb1, etb2);:}
+ | NOT bool_expr:be {:RESULT=Node.n("NOT", be);:}
+;
+
+evaluates_to_bool_or_id
+::=
+    evaluates_to_bool:etb {:RESULT=Node.n(etb);:}
+  | ID:i {:RESULT=Node.n(i);:}
+;
+
+// TODO: Addeth function calls
+evaluates_to_bool
+::=
+    BOOL {:RESULT=Node.n("BOOL");:}
+  | LPAREN bool_expr:be RPAREN {:RESULT=Node.n(be);:}
+;
+
+bool_oper
+::=
+    AND    {:RESULT=Node.n("&&");:}
+  | OR     {:RESULT=Node.n("||");:}
+  | IMPLIC {:RESULT=Node.n("=>");:}
 ;
 
 seq_definition
@@ -330,7 +362,8 @@ operator
 
 variable_decl_init
 ::=
-    var_decl:v ASSIGN full_exp:e {:RESULT=Node.n("ASSIGNMENT", v, e);:}
+    ID:i ASSIGN full_exp:e {:RESULT=Node.n("ASSIGNMENT", i, e);:}
+  | var_decl:v ASSIGN full_exp:e {:RESULT=Node.n("ASSIGNMENT", v, e);:}
   | var_decl:v SEMICOL {:RESULT=Node.n(v);:}
 ;
 
@@ -346,20 +379,20 @@ type_decl
 
 type
 ::=
-    TYPE_BOOL {:RESULT=Node.n("BOOL");:}
-  | TYPE_CHAR {:RESULT=Node.n("CHAR");:}
-  | TYPE_INT {:RESULT=Node.n("INT");:}
-  | TYPE_RAT {:RESULT=Node.n("RAT");:}
-  | TYPE_FLOAT {:RESULT=Node.n("FLOAT");:}
+    TYPE_BOOL   {:RESULT=Node.n("BOOL");:}
+  | TYPE_CHAR   {:RESULT=Node.n("CHAR");:}
+  | TYPE_INT    {:RESULT=Node.n("INT");:}
+  | TYPE_RAT    {:RESULT=Node.n("RAT");:}
+  | TYPE_FLOAT  {:RESULT=Node.n("FLOAT");:}
   | TYPE_STRING {:RESULT=Node.n("STRING");:}
-  | type_seq:s {:RESULT=Node.n(s);:}
+  | type_seq:s  {:RESULT=Node.n(s);:}
   | type_dict:d {:RESULT=Node.n(d);:}
-  | ID:i {:RESULT=Node.n("CUSTOM_TYPE", i);:}
+  | ID:i        {:RESULT=Node.n("CUSTOM_TYPE", i);:}
 ;
 
 collect_type
 ::=
-    type:t {:RESULT=Node.n(t);:}
+    type:t   {:RESULT=Node.n(t);:}
   | TYPE_TOP {:RESULT=Node.n("TOP");:}
 ;
 

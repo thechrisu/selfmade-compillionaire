@@ -79,46 +79,51 @@ Identifier = {Letter}{IdChar}*
 Integer = (-?{Digit}+)
 Float = (-?{Digit}+\.{Digit}+)
 //TODO what format to have for floats? e.g. do we allow -.1 for -.0.1,
-Bool = (T |F)
-EscapedChars = (\\(\\|\'))
+Bool = (T|F)
 Char = ([a-zA-Z\x21-\x40\x5b-\x60\x7b-\x7e]|\s)
 Print = (print{Whitespace}+)
 Read = (read{Whitespace}+)
 Return = (return{Whitespace}+)
-CharVar = (\'({Char}|{EscapedChars})\')
+CharVar = (\'({Char}|(\\(\\|\')))\')
+StringVar = (\"({Char}|(\\(\\|\")))*\")
 %%
 <YYINITIAL> {
   {MultiLineComment}     { return symbol(sym.MULTI_LINE_COMMENT);   }
   {SingleLineComment}    { return symbol(sym.SINGLE_LINE_COMMENT);  }
 
-  {Read}        { return symbol(sym.READ);         }
-  {Print}       { return symbol(sym.PRINT);        }
-  {Return}      { return symbol(sym.RETURN);       }
-  "main"        { return symbol(sym.MAIN);         }
-  "fdef"        { return symbol(sym.FDEF);         }
-  "bool"        { return symbol(sym.TYPE_BOOL);    }
-  "char"        { return symbol(sym.TYPE_CHAR);    }
-  "int"         { return symbol(sym.TYPE_INT);     }
-  "rat"         { return symbol(sym.TYPE_RAT);     }
-  "float"       { return symbol(sym.TYPE_FLOAT);   }
-  "string"      { return symbol(sym.TYPE_STRING);  }
-  "seq"        { return symbol(sym.SEQ);    }
-  "dict"       { return symbol(sym.DICT);   }
-  "top"         { return symbol(sym.TYPE_TOP);     }
+  {Read}        { return symbol(sym.READ);        }
+  {Print}       { return symbol(sym.PRINT);       }
+  {Return}      { return symbol(sym.RETURN);      }
+  "main"        { return symbol(sym.MAIN);        }
+  "fdef"        { return symbol(sym.FDEF);        }
+  "bool"        { return symbol(sym.TYPE_BOOL);   }
+  "char"        { return symbol(sym.TYPE_CHAR);   }
+  "int"         { return symbol(sym.TYPE_INT);    }
+  "rat"         { return symbol(sym.TYPE_RAT);    }
+  "float"       { return symbol(sym.TYPE_FLOAT);  }
+  "string"      { return symbol(sym.TYPE_STRING); }
+  "seq"         { return symbol(sym.SEQ);         }
+  "dict"        { return symbol(sym.DICT);        }
+  "top"         { return symbol(sym.TYPE_TOP);    }
 
   {CharVar}     { return symbol(sym.CHAR);                   }
+  {StringVar}   { return symbol(sym.STRING);                 }
   {Integer}     { return symbol(sym.INTEGER,
                                 Integer.parseInt(yytext())); }
   {Float}       { return symbol(sym.FLOAT,
                                 Float.parseFloat(yytext())); }
-  {Bool}        { return symbol(sym.BOOL, yytext());                   }
-  {Identifier}  { return symbol(sym.ID, yytext());   }
+  {Bool}        { return symbol(sym.BOOL, yytext());         }
+  {Identifier}  { return symbol(sym.ID, yytext());           }
 
   {Whitespace}  { /* do nothing */               }
+  "!"           { return symbol(sym.NOT);        }
+  "&&"          { return symbol(sym.AND);        }
+  "||"          { return symbol(sym.OR);         }
+  "=>"          { return symbol(sym.IMPLIC);     }
   ":="          { return symbol(sym.ASSIGN);     }
   "::"          { return symbol(sym.CONCAT);     }
   ":"           { return symbol(sym.COLON);      }
-  "_"           { return symbol(sym.UNDERSCORE);      }
+  "_"           { return symbol(sym.UNDERSCORE); }
   ";"           { return symbol(sym.SEMICOL);    }
   ","           { return symbol(sym.COMMA);      }
   "+"           { return symbol(sym.PLUS);       }
@@ -131,8 +136,8 @@ CharVar = (\'({Char}|{EscapedChars})\')
   "}"           { return symbol(sym.RCURLY);     }
   "["           { return symbol(sym.LSQUARE);    }
   "]"           { return symbol(sym.RSQUARE);    }
-  "<"           { return symbol(sym.LANGLE);    }
-  ">"           { return symbol(sym.RANGLE);    }
+  "<"           { return symbol(sym.LANGLE);     }
+  ">"           { return symbol(sym.RANGLE);     }
 }
 
 [^]  {
