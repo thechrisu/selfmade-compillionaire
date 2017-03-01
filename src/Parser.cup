@@ -191,17 +191,26 @@ normal_func_or_comment
   | normal_func:f {:RESULT=Node.n(f);:}
 ;
 
-// TODO: Add return param
 normal_func
 ::=
     FDEF ID:i func_param_decl:p normal_func_body:fb {:RESULT=Node.n("FDEF", i, p, fb);:}
 ;
 
 
-//TODO add the actual args
 func_param_decl
 ::=
     LPAREN top_level_formal_parameter_list RPAREN {:RESULT=Node.n("PARAM_DECL");:}
+;
+
+top_level_formal_parameter_list
+::=
+    formal_parameter_list:ne {:RESULT=Node.n(ne);:}
+   | /* nuffin */ {:RESULT=Node.n("NO_PARAMS");:}
+;
+
+formal_parameter_list
+::= var_decl:f COMMA formal_parameter_list:fl {:RESULT=Node.n("NON_ENDING_PARAMS_LIST", f, fl);:}
+   | var_decl:f {:RESULT=Node.n(f);:}
 ;
 
 normal_func_body
@@ -227,13 +236,10 @@ stmnts
   | stmnt:s stmnts:ss {:RESULT=Node.n(s, ss);:}
 ;
 
-//TODO: Restrict return statement to functions with return type - Chris
-//TODO: ^ This todo is crap. Functions can return to interrupt their execution. - Tim
 stmnt
 ::=
-    any_comment:c {:RESULT=Node.n(c);:}
-  | variable_decl_init:s {:RESULT=Node.n(s);:}
-  | full_exp:s {:RESULT=Node.n(s);:}
+    variable_decl_init:s {:RESULT=Node.n(s);:}
+  | any_comment:c {:RESULT=Node.n(c);:}
   | read_statement:r {:RESULT=Node.n(r);:}
   | print_statement:p {:RESULT=Node.n(p);:}
   | return_statement:re {:RESULT=Node.n(re);:}
