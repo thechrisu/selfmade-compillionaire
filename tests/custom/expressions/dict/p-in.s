@@ -1,0 +1,5 @@
+
+main {
+   x:bool := 3 in [1,2,3];
+    x := y in z;
+};

@@ -77,7 +77,7 @@ Digit = [0-9]
 IdChar = {Letter} | {Digit} | "_"
 Identifier = {Letter}{IdChar}*
 Integer = (-?{Digit}+)
-Float = (-?{Digit}+\.{Digit}+)
+Float = (-?{Digit}*\.?{Digit}+)
 //TODO what format to have for floats? e.g. do we allow -.1 for -.0.1,
 Bool = (T|F)
 Char = ([a-zA-Z\x21-\x40\x5b-\x60\x7b-\x7e]|\s)
@@ -105,13 +105,13 @@ StringVar = (\"({Char}|(\\(\\|\")))*\")
   "seq"         { return symbol(sym.SEQ);         }
   "dict"        { return symbol(sym.DICT);        }
   "top"         { return symbol(sym.TYPE_TOP);    }
-
+  "in"          { return symbol(sym.IN);          }
   {CharVar}     { return symbol(sym.CHAR);                   }
   {StringVar}   { return symbol(sym.STRING);                 }
   {Integer}     { return symbol(sym.INTEGER,
-                                Integer.parseInt(yytext())); }
+                                yytext()); }
   {Float}       { return symbol(sym.FLOAT,
-                                Float.parseFloat(yytext())); }
+                                yytext()); }
   {Bool}        { return symbol(sym.BOOL, yytext());         }
   {Identifier}  { return symbol(sym.ID, yytext());           }
 
@@ -129,6 +129,7 @@ StringVar = (\"({Char}|(\\(\\|\")))*\")
   "+"           { return symbol(sym.PLUS);       }
   "-"           { return symbol(sym.MINUS);      }
   "*"           { return symbol(sym.MULT);       }
+  "^"           { return symbol(sym.POW);        }
   "/"           { return symbol(sym.DIV);        }
   "("           { return symbol(sym.LPAREN);     }
   ")"           { return symbol(sym.RPAREN);     }

@@ -31,6 +31,7 @@ parser code {:
         if(o instanceof Node) node = (Node) o;
         else if(o instanceof String) node = new Node((String) o);
         else node = new Node(o.toString());
+        System.out.println(node);
         return node;
     }
 
@@ -86,11 +87,11 @@ terminal LCURLY, RCURLY; // {}
 terminal LSQUARE, RSQUARE; // []
 terminal LANGLE, RANGLE; // <>
 // Arithemtic operators
-terminal PLUS, MINUS, MULT, DIV;
+terminal PLUS, MINUS, MULT, DIV, POW;
 // Comparions operators
 terminal EQ, LESS, LESS_EQ; // =, <, <=
 // Dictionaries and sequences (collections)
-terminal DICT, SEQ; // dict, seq
+terminal DICT, SEQ, IN; // dict, seq
 // Types
 terminal TYPE_BOOL, TYPE_CHAR, TYPE_INT, TYPE_RAT, TYPE_FLOAT, TYPE_STRING, TYPE_TOP;
 // Other operators
@@ -115,7 +116,6 @@ terminal MULTI_LINE_COMMENT, SINGLE_LINE_COMMENT; // /#...#/, #...
 // TODO: Null value
 // TODO: Alias
 // TODO: Are declarations only allowed before main?
-// TODO: Power
 /**
   * NON-TERMINALS
   */
@@ -124,7 +124,7 @@ terminal MULTI_LINE_COMMENT, SINGLE_LINE_COMMENT; // /#...#/, #...
 nonterminal variable_decl_init, var_decl, type, maybe_type_decl, type_decl;
 nonterminal type_seq, type_dict, collect_type;
 // Functions
-nonterminal normal_func_or_comment;
+nonterminal global_declaration_except_main;
 // Comments
 nonterminal any_comment;
 // Parameters
@@ -134,7 +134,7 @@ nonterminal seq_definition, no_trailing_comma_expressions, zero_or_more_comma_se
 // Dict
 nonterminal dict_definition, no_trailing_comma_k_v_pairs, zero_or_more_k_v_pairs, dict_element;
 // Boolean
-nonterminal bool_expr, evaluates_to_bool, evaluates_to_bool_or_id, bool_oper;
+nonterminal bool_expr, evaluates_to_bool, evaluates_to_bool_or_id, bool_oper, in_expr;
 
 /**
   * OLD STUFF
@@ -144,13 +144,17 @@ nonterminal bool_expr, evaluates_to_bool, evaluates_to_bool_or_id, bool_oper;
 terminal BADCHAR; //TODO: Return this? When is it used?
 terminal PRINT, READ, RETURN, MAIN, FDEF;
 nonterminal stmnts, stmnt, top_level;
-nonterminal full_exp, simple_exp, operator;
+nonterminal full_exp, simple_exp, boolean_or_simple, operator;
 nonterminal print_statement, read_statement, return_statement;
 nonterminal funcs_or_main, main_func, normal_func, normal_func_body;
-nonterminal funcs_or_global_decls, funcs_or_comments, func_param_decl, func_body_no_return, func_body_with_return;
+nonterminal funcs_or_global_decls, global_declarations, func_param_decl, func_body_no_return, func_body_with_return;
 
+precedence left AND, OR, IMPLIC;
+precedence left NOT;
+precedence left EQ, LESS, LESS_EQ, IN;
 precedence left PLUS, MINUS;
 precedence left DIV, MULT;
+precedence left POW;
 
 top_level
 ::=
@@ -180,20 +184,21 @@ any_comment
 
 funcs_or_main
 ::=
-    main_func:mf funcs_or_comments:fu {:RESULT=Node.n("MAIN_THEN_FUNC", mf, fu);:}
-  | normal_func:nf funcs_or_main:fum {:RESULT=Node.n("FUNC_THEN_MAYBE_MAIN", nf, fum);:}
-;
+   global_declarations:gd1  main_func:mf global_declarations:gd2 {:RESULT=Node.n("MAIN_THEN_FUNC", gd1, mf, gd2);:};
+//  | global_declaration_except_main:gd funcs_or_main:fum {:RESULT=Node.n("DECL_THEN_MAYBE_MAIN", gd, fum);:}
+//;
 
-funcs_or_comments
+global_declarations
 ::=
-    normal_func_or_comment:f funcs_or_comments:fs {:RESULT=Node.n("FUNC_THEN_FUNCS", f, fs);:}
+    global_declaration_except_main:f global_declarations:fs {:RESULT=Node.n("FUNC_THEN_FUNCS", f, fs);:}
   | /* nuffin */ {:RESULT=Node.n("FUNCS_END");:}
 ;
 
-normal_func_or_comment
+global_declaration_except_main
 ::=
     any_comment:c {:RESULT=Node.n(c);:}
   | normal_func:f {:RESULT=Node.n(f);:}
+  | variable_decl_init:v {:RESULT=Node.n(v);:}
 ;
 
 normal_func
@@ -252,14 +257,20 @@ stmnt
 
 full_exp
 ::=
-    simple_exp:e SEMICOL {:RESULT=Node.n(e);:}
-  | bool_expr:be SEMICOL {:RESULT=Node.n(be);:}
+    boolean_or_simple:be SEMICOL {:RESULT=Node.n(be);:}
+;
+
+boolean_or_simple
+::=
+    bool_expr:be {:RESULT=Node.n(be);:}
+  | simple_exp:se {:RESULT=Node.n(se);:}
 ;
 
 //TODO: Describe syntax of rationals in ambiguities.txt
 simple_exp
 ::=
     INTEGER:i {:RESULT=Node.n(i);:}
+  | FLOAT:i {:RESULT=Node.n(i);:}
   | INTEGER:i UNDERSCORE INTEGER:j DIV INTEGER:k {:RESULT=Node.n("MIXED_RAT", i, j, k);:}
   | CHAR:i {:RESULT=Node.n("CHARVAR");:}
   | STRING:i {:RESULT=Node.n("STRING");:}
@@ -275,6 +286,15 @@ bool_expr
    evaluates_to_bool:etb {:RESULT=Node.n(etb);:}
  | evaluates_to_bool_or_id:etb1 bool_oper:bo evaluates_to_bool_or_id:etb2 {:RESULT=Node.n(bo, etb1, etb2);:}
  | NOT bool_expr:be {:RESULT=Node.n("NOT", be);:}
+ | in_expr:ie {:RESULT=Node.n(ie);:}
+;
+
+//TODO: Reason about precedence of in operator
+in_expr
+::=
+   simple_exp:se IN ID:i {:RESULT=Node.n(se, "in", i);:}
+ | simple_exp:se IN dict_definition:i {:RESULT=Node.n(se, "in", i);:}
+ | simple_exp:se IN seq_definition:i {:RESULT=Node.n(se, "in", i);:}
 ;
 
 evaluates_to_bool_or_id
@@ -311,8 +331,8 @@ zero_or_more_comma_separated_expressions
 
 no_trailing_comma_expressions
 ::=
-     simple_exp:e COMMA no_trailing_comma_expressions:es {:RESULT=Node.n("NON_ENDING_COMMA_LIST", e, es);:}
-   | simple_exp:e {:RESULT=Node.n(e);:}
+     boolean_or_simple:e COMMA no_trailing_comma_expressions:es {:RESULT=Node.n("NON_ENDING_COMMA_LIST", e, es);:}
+   | boolean_or_simple:e {:RESULT=Node.n(e);:}
 ;
 
 dict_definition
@@ -334,7 +354,7 @@ no_trailing_comma_k_v_pairs
 ;
 
 dict_element
-::= simple_exp:k COLON simple_exp:v {:RESULT=Node.n("DICT_ELEM", k, v);:}
+::= boolean_or_simple:k COLON boolean_or_simple:v {:RESULT=Node.n("DICT_ELEM", k, v);:}
 ;
 
 read_statement
@@ -358,6 +378,7 @@ operator
   | MINUS {:RESULT=Node.n("-");:}
   | MULT  {:RESULT=Node.n("*");:}
   | DIV   {:RESULT=Node.n("/");:}
+  | POW   {:RESULT=Node.n("^");:}
 ;
 
 variable_decl_init
