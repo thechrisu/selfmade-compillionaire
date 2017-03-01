@@ -191,14 +191,12 @@ normal_func_or_comment
   | normal_func:f {:RESULT=Node.n(f);:}
 ;
 
-// TODO: Add return param
 normal_func
 ::=
     FDEF ID:i func_param_decl:p normal_func_body:fb {:RESULT=Node.n("FDEF", i, p, fb);:}
 ;
 
 
-//TODO add the actual args
 func_param_decl
 ::=
     LPAREN top_level_formal_parameter_list RPAREN {:RESULT=Node.n("PARAM_DECL");:}
