@@ -79,13 +79,13 @@ Identifier = {Letter}{IdChar}*
 Integer = (-?{Digit}+)
 Float = (-?{Digit}+\.{Digit}+)
 //TODO what format to have for floats? e.g. do we allow -.1 for -.0.1,
-Bool = (T |F)
-EscapedChars = (\\(\\|\'))
+Bool = (T|F)
 Char = ([a-zA-Z\x21-\x40\x5b-\x60\x7b-\x7e]|\s)
 Print = (print{Whitespace}+)
 Read = (read{Whitespace}+)
 Return = (return{Whitespace}+)
-CharVar = (\'({Char}|{EscapedChars})\')
+CharVar = (\'({Char}|(\\(\\|\')))\')
+StringVar = (\"({Char}|(\\(\\|\")))*\")
 %%
 <YYINITIAL> {
   {MultiLineComment}     { return symbol(sym.MULTI_LINE_COMMENT);   }
@@ -107,6 +107,7 @@ CharVar = (\'({Char}|{EscapedChars})\')
   "top"         { return symbol(sym.TYPE_TOP);     }
 
   {CharVar}     { return symbol(sym.CHAR);                   }
+  {StringVar}   { return symbol(sym.STRING);                 }
   {Integer}     { return symbol(sym.INTEGER,
                                 Integer.parseInt(yytext())); }
   {Float}       { return symbol(sym.FLOAT,
