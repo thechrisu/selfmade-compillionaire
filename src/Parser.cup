@@ -134,7 +134,7 @@ nonterminal seq_definition, no_trailing_comma_expressions, zero_or_more_comma_se
 // Dict
 nonterminal dict_definition, no_trailing_comma_k_v_pairs, zero_or_more_k_v_pairs, dict_element;
 // Boolean
-nonterminal bool_expr, evaluates_to_bool, bool_oper;
+nonterminal bool_expr, evaluates_to_bool, evaluates_to_bool_or_id, bool_oper;
 
 /**
   * OLD STUFF
@@ -273,8 +273,14 @@ simple_exp
 bool_expr
 ::=
    evaluates_to_bool:etb {:RESULT=Node.n(etb);:}
- | evaluates_to_bool:etb1 bool_oper:bo evaluates_to_bool:etb2 {:RESULT=Node.n(bo, etb1, etb2);:}
+ | evaluates_to_bool_or_id:etb1 bool_oper:bo evaluates_to_bool_or_id:etb2 {:RESULT=Node.n(bo, etb1, etb2);:}
  | NOT bool_expr:be {:RESULT=Node.n("NOT", be);:}
+;
+
+evaluates_to_bool_or_id
+::=
+    evaluates_to_bool:etb {:RESULT=Node.n(etb);:}
+  | ID:i {:RESULT=Node.n(i);:}
 ;
 
 // TODO: Addeth function calls
