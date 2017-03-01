@@ -77,7 +77,7 @@ parser code {:
 // Identifier
 terminal ID;
 // Basic data representations
-terminal INTEGER, FLOAT, BOOL, CHAR;
+terminal INTEGER, FLOAT, BOOL, CHAR, STRING;
 // Boolean
 terminal NOT, AND, OR, IMPLIC;
 // Bracket extravaganza
@@ -262,6 +262,7 @@ simple_exp
     INTEGER:i {:RESULT=Node.n(i);:}
   | INTEGER:i UNDERSCORE INTEGER:j DIV INTEGER:k {:RESULT=Node.n("MIXED_RAT", i, j, k);:}
   | CHAR:i {:RESULT=Node.n("CHARVAR");:}
+  | STRING:i {:RESULT=Node.n("STRING");:}
   | ID:i {:RESULT=Node.n(i);:}
   | seq_definition:s {:RESULT=Node.n(s);:}
   | dict_definition:d {:RESULT=Node.n(d);:}

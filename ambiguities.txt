@@ -70,4 +70,4 @@ TODO: Explain escaping rules (Do we allow newline? Do we allow tab? Do we allow 
 TODO: Explain that table on website uses ASCII 166 (broken pipe ¦) in place of ASCII 124. Instead we match for ASCII 124,
 not ASCII 126, because pipe (|) is used very commonly and the table mentions ASCII 123-126 in the surrounding rows,
 implicating that probably they meant ASCII 124, and not ASCII 166
-TODO: Allow newline/tab for chars?
+TODO: Allow newline/tab for chars/strings?
