@@ -49,6 +49,8 @@ import java_cup.runtime.*;
         System.out.printf("ID %s", value); break;
       case sym.BOOL:
           System.out.printf("BOOL %s", value); break;
+      case sym.CHAR:
+          System.out.printf("CHAR %s", value); break;
     }
     System.out.print(">  ");
   }
@@ -78,13 +80,12 @@ Integer = (-?{Digit}+)
 Float = (-?{Digit}+\.{Digit}+)
 //TODO what format to have for floats? e.g. do we allow -.1 for -.0.1,
 Bool = (T |F)
-Char = ([a-zA-Z\x21-\x40\x5b-\x60\x7b-\x7e])
-//TODO: Test for allowed/disallowed chars
+EscapedChars = (\\(\\|\'))
+Char = ([a-zA-Z\x21-\x40\x5b-\x60\x7b-\x7e]|\s)
 Print = (print{Whitespace}+)
 Read = (read{Whitespace}+)
 Return = (return{Whitespace}+)
-CharVar = (\'{Char}\')
-//TODO: Allow other types of single quotes? (like)
+CharVar = (\'({Char}|{EscapedChars})\')
 %%
 <YYINITIAL> {
   {MultiLineComment}     { return symbol(sym.MULTI_LINE_COMMENT);   }

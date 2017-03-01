@@ -15,7 +15,8 @@ Our solution: The wording in the paragraph suggests that it is possible so we're
 
 Paragraph: 5
 Problem: It's unclear exactly which single-quote character is meant in the definition of a char. 
-Our solution: For simplicity, we only go with ASCII 39 ('), the character used to denote character literals in Java
+Our solution: For simplicity, we only go with ASCII 39 ('), the character used to denote character literals in Java.
+While e.g. Python also accepts ASCII 96 (`), we are no Pythonistas.
 
 Paragraph: 16
 Problem: It's not explicit whether functions may be completely empty (in the definition it says
@@ -65,3 +66,8 @@ TODO: Mixing boolean and arithmetic expressions (e.g. ((1 + 1) or T))
 TODO: Array slicing: Are expressions allowed for slice indices?
 TODO: In spec, only smaller/smaller-eq is mentioned. Surely, you want greater and greater equal?
 TODO: Is empty tdef ok? (see test)
+TODO: Explain escaping rules (Do we allow newline? Do we allow tab? Do we allow \s for space)
+TODO: Explain that table on website uses ASCII 166 (broken pipe ¦) in place of ASCII 124. Instead we match for ASCII 124,
+not ASCII 126, because pipe (|) is used very commonly and the table mentions ASCII 123-126 in the surrounding rows,
+implicating that probably they meant ASCII 124, and not ASCII 166
+TODO: Allow newline/tab for chars?
