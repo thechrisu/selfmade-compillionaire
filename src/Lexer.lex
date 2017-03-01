@@ -41,10 +41,16 @@ import java_cup.runtime.*;
         System.out.print("("); break;
       case sym.RPAREN:
         System.out.print(")"); break;
+      case sym.UNDERSCORE:
+        System.out.print("_"); break;
       case sym.INTEGER:
         System.out.printf("INT %d", value); break;
       case sym.ID:
-        System.out.printf("IDENT %s", value); break;
+        System.out.printf("ID %s", value); break;
+      case sym.BOOL:
+          System.out.printf("BOOL %s", value); break;
+      case sym.CHAR:
+          System.out.printf("CHAR %s", value); break;
     }
     System.out.print(">  ");
   }
@@ -61,11 +67,11 @@ import java_cup.runtime.*;
 %}
 
 Newline = \r|\n|\r\n
+Whitespace = {Newline}|" "|"\t"
 
-MultiLineComment = (\/#.*?#\/)
+MultiLineComment = (\/#(.|{Whitespace})*?#\/)
 SingleLineComment = (#.*?({Newline}))
 
-Whitespace = {Newline}|" "|"\t"
 Letter = [a-zA-Z]
 Digit = [0-9]
 IdChar = {Letter} | {Digit} | "_"
@@ -73,18 +79,17 @@ Identifier = {Letter}{IdChar}*
 Integer = (-?{Digit}+)
 Float = (-?{Digit}+\.{Digit}+)
 //TODO what format to have for floats? e.g. do we allow -.1 for -.0.1,
-Bool = (T|F)
-Char = ([a-zA-Z\x21-\x40\x5b-\x60\x7b-\x7e])
-//TODO: Test for allowed/disallowed chars
+Bool = (T |F)
+EscapedChars = (\\(\\|\'))
+Char = ([a-zA-Z\x21-\x40\x5b-\x60\x7b-\x7e]|\s)
 Print = (print{Whitespace}+)
 Read = (read{Whitespace}+)
 Return = (return{Whitespace}+)
-CharVar = (\'{Char}\')
-//TODO: Allow other types of single quotes? (like)
+CharVar = (\'({Char}|{EscapedChars})\')
 %%
 <YYINITIAL> {
-  {MultiLineComment}        { return symbol(sym.MULTI_LINE_COMMENT);         }
-  {SingleLineComment}        { return symbol(sym.SINGLE_LINE_COMMENT);         }
+  {MultiLineComment}     { return symbol(sym.MULTI_LINE_COMMENT);   }
+  {SingleLineComment}    { return symbol(sym.SINGLE_LINE_COMMENT);  }
 
   {Read}        { return symbol(sym.READ);         }
   {Print}       { return symbol(sym.PRINT);        }
@@ -97,24 +102,23 @@ CharVar = (\'{Char}\')
   "rat"         { return symbol(sym.TYPE_RAT);     }
   "float"       { return symbol(sym.TYPE_FLOAT);   }
   "string"      { return symbol(sym.TYPE_STRING);  }
-  "seq<"        { return symbol(sym.SEQ_START);    }
-  "dict<"       { return symbol(sym.DICT_START);   }
+  "seq"        { return symbol(sym.SEQ);    }
+  "dict"       { return symbol(sym.DICT);   }
   "top"         { return symbol(sym.TYPE_TOP);     }
-  ">"           { return symbol(sym.COLLECT_END);  }
 
   {CharVar}     { return symbol(sym.CHAR);                   }
   {Integer}     { return symbol(sym.INTEGER,
                                 Integer.parseInt(yytext())); }
   {Float}       { return symbol(sym.FLOAT,
                                 Float.parseFloat(yytext())); }
-  {Bool}        { return symbol(sym.BOOL);                   }
+  {Bool}        { return symbol(sym.BOOL, yytext());                   }
   {Identifier}  { return symbol(sym.ID, yytext());   }
 
-  {Whitespace}  { /* do nothing */               }
   {Whitespace}  { /* do nothing */               }
   ":="          { return symbol(sym.ASSIGN);     }
   "::"          { return symbol(sym.CONCAT);     }
   ":"           { return symbol(sym.COLON);      }
+  "_"           { return symbol(sym.UNDERSCORE);      }
   ";"           { return symbol(sym.SEMICOL);    }
   ","           { return symbol(sym.COMMA);      }
   "+"           { return symbol(sym.PLUS);       }
@@ -125,7 +129,10 @@ CharVar = (\'{Char}\')
   ")"           { return symbol(sym.RPAREN);     }
   "{"           { return symbol(sym.LCURLY);     }
   "}"           { return symbol(sym.RCURLY);     }
-
+  "["           { return symbol(sym.LSQUARE);    }
+  "]"           { return symbol(sym.RSQUARE);    }
+  "<"           { return symbol(sym.LANGLE);    }
+  ">"           { return symbol(sym.RANGLE);    }
 }
 
 [^]  {

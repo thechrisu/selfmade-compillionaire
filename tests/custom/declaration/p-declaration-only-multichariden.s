@@ -1,5 +1,5 @@
 main {
     aasdfasd : int;
-    asjdklf;ajsdklj: string;
+    asjdklfajsdklj: string;
     dsdf : char;
 };
