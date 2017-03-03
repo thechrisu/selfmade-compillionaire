@@ -1,0 +1,4 @@
+fdef void x () {};
+
+main {
+};

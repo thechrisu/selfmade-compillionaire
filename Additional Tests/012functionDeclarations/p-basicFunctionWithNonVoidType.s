@@ -1,0 +1,4 @@
+fdef int x () {};
+
+main {
+};
