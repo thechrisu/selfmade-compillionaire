@@ -1,3 +1,3 @@
 main {
-    if (x => x) x := 0; fi
+    if (x = x) x := 0; fi
 };
