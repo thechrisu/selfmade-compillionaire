@@ -38,6 +38,7 @@
 #######################################################################
 
 program_name=$0
+program_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 default_test_dir="./tests/custom/"
 temp_file="./test.temp"
 
@@ -75,6 +76,7 @@ function pre_test {
     neutral "Rebuilding project before testing..."
     separator
     echo ""
+    cd "$program_dir"
     make clean
     local clean_status=$?
     make
@@ -238,13 +240,13 @@ function run_test_file {
         fi
         local message=""
         local output=${indent}${symbol}
+        if [ ! -z "$out" ]; then output=${output}${out//$'\n'/\\n${indent}${symbol}${indent}}; fi
+        if [ ! -z "$err" ]; then output=${output}${err//$'\n'/\\n${indent}${symbol}${indent}}; fi
         if [ "$type" == "p" ]
         then
             message="Was supposed to succeed but failed."
-            output=${output}${err//$'\n'/\\n${indent}${symbol}${indent}}
         else
             message="Was supposed to fail but succeeded."
-            output=${output}${out//$'\n'/\\n${indent}${symbol}${indent}}
         fi
         if [ -z "$last" ]
         then
