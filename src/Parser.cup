@@ -17,6 +17,9 @@ parser code {:
     public int counter;
     private Object value;
 
+    public boolean printed = false;
+    public boolean childrenPrinted = false;
+
     public Node(Object value){
       Node.globalCounter += 1;
       this.counter = Node.globalCounter;
@@ -45,12 +48,18 @@ parser code {:
 
     public String toString(){
       String ret = "";
-      ret += String.format("%d [label=\"%s\"];",
+        if (!this.printed) {
+            this.printed = true;
+            ret += String.format("%d [label=\"%s\"];",
                             counter, value.toString());
-      for(Node n: children){
-        ret += String.format("%d -> %d;", this.counter, n.counter);
-        ret += n.toString();
-      }
+        }
+        for(Node n: children){
+            if (n.childrenPrinted) continue;
+            n.childrenPrinted = true;
+            if (!ret.equals("")) ret += "\n";
+            ret += String.format("%d -> %d;", this.counter, n.counter);
+            ret += "\n" + n.toString();
+        }
       return ret;
     }
   }
@@ -130,7 +139,8 @@ nonterminal any_comment;
 // Parameters
 nonterminal top_level_formal_parameter_list, formal_parameter_list, formal_parameter;
 // Sequence
-nonterminal seq_definition, no_trailing_comma_expressions, zero_or_more_comma_separated_expressions;
+nonterminal seq_concat, evaluates_to_seq_or_id, seq_definition, no_trailing_comma_expressions, zero_or_more_comma_separated_expressions;
+nonterminal slicing, maybe_slicing_simple_exp;
 // Dict
 nonterminal dict_definition, no_trailing_comma_k_v_pairs, zero_or_more_k_v_pairs, dict_element;
 // Boolean
@@ -274,8 +284,8 @@ simple_exp
   | INTEGER:i UNDERSCORE INTEGER:j DIV INTEGER:k {:RESULT=Node.n("MIXED_RAT", i, j, k);:}
   | CHAR:i {:RESULT=Node.n("CHARVAR");:}
   | STRING:i {:RESULT=Node.n("STRING");:}
-  | ID:i {:RESULT=Node.n(i);:}
-  | seq_definition:s {:RESULT=Node.n(s);:}
+  | seq_concat:s {:RESULT=Node.n(s);:}
+//  | ID:i {:RESULT=Node.n(i);:}
   | dict_definition:d {:RESULT=Node.n(d);:}
   | simple_exp:e1 operator:o simple_exp:e2 {:RESULT=Node.n(o, e1, e2);:}
   | LPAREN simple_exp:e RPAREN {:RESULT=Node.n("PARENS", "(", e, ")");:}
@@ -290,11 +300,12 @@ bool_expr
 ;
 
 //TODO: Reason about precedence of in operator
+//TODO: `simple_exp`? Really? Only `ID` can work here. -Tim
 in_expr
 ::=
    simple_exp:se IN ID:i {:RESULT=Node.n(se, "in", i);:}
- | simple_exp:se IN dict_definition:i {:RESULT=Node.n(se, "in", i);:}
- | simple_exp:se IN seq_definition:i {:RESULT=Node.n(se, "in", i);:}
+ | simple_exp:se IN dict_definition:i {:RESULT=Node.n("in", se, i);:}
+ | simple_exp:se IN seq_definition:i {:RESULT=Node.n("in", se, i);:}
 ;
 
 evaluates_to_bool_or_id
@@ -315,6 +326,30 @@ bool_oper
     AND    {:RESULT=Node.n("&&");:}
   | OR     {:RESULT=Node.n("||");:}
   | IMPLIC {:RESULT=Node.n("=>");:}
+;
+
+seq_concat
+::=
+    evaluates_to_seq_or_id:sd CONCAT seq_concat:sq {:RESULT=Node.n("SEQ_CONCAT", sd, sq);:}
+  | evaluates_to_seq_or_id:sd {:RESULT=Node.n(sd);:}
+;
+
+evaluates_to_seq_or_id
+::=
+    seq_definition:sd {:RESULT=Node.n(sd);:}
+  | ID:i {:RESULT=Node.n("ID: " + i);:}
+  | evaluates_to_seq_or_id:se slicing:sl {:RESULT=Node.n("SLICED_SEQ", se, sl);:}
+;
+
+slicing
+::=
+    LSQUARE maybe_slicing_simple_exp:s COLON maybe_slicing_simple_exp:e RSQUARE {:RESULT=Node.n("SLICING", s, e);:}
+;
+
+maybe_slicing_simple_exp
+::=
+    simple_exp:se {:RESULT=Node.n(se);:}
+  | /* nuffins */ {:RESULT=Node.n("EMPTY");:}
 ;
 
 seq_definition
