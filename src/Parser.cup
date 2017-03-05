@@ -128,7 +128,7 @@ terminal MULTI_LINE_COMMENT, SINGLE_LINE_COMMENT; // /#...#/, #...
 /**
   * NON-TERMINALS
   */
-
+nonterminal element;
 // Variables and types
 nonterminal variable_decl_init, var_decl, type, maybe_type_decl, type_decl;
 nonterminal type_seq, type_dict, collect_type;
@@ -165,6 +165,7 @@ precedence left EQ, LESS, LESS_EQ, IN;
 precedence left PLUS, MINUS;
 precedence left DIV, MULT;
 precedence left POW;
+precedence left CONCAT;
 
 top_level
 ::=
@@ -284,8 +285,11 @@ simple_exp
   | INTEGER:i UNDERSCORE INTEGER:j DIV INTEGER:k {:RESULT=Node.n("MIXED_RAT", i, j, k);:}
   | CHAR:i {:RESULT=Node.n("CHARVAR");:}
   | STRING:i {:RESULT=Node.n("STRING");:}
-  | seq_concat:s {:RESULT=Node.n(s);:}
+  | simple_exp:sd CONCAT simple_exp:sq {:RESULT=Node.n("SEQ_CONCAT", sd, sq);:}
+//  | seq_concat:s {:RESULT=Node.n(s);:}
 //  | ID:i {:RESULT=Node.n(i);:}
+  | element:e {:RESULT=Node.n(e); :}
+  | seq_definition:s {:RESULT=Node.n(s); :}
   | dict_definition:d {:RESULT=Node.n(d);:}
   | simple_exp:e1 operator:o simple_exp:e2 {:RESULT=Node.n(o, e1, e2);:}
   | LPAREN simple_exp:e RPAREN {:RESULT=Node.n("PARENS", "(", e, ")");:}
@@ -328,18 +332,18 @@ bool_oper
   | IMPLIC {:RESULT=Node.n("=>");:}
 ;
 
-seq_concat
+/*seq_concat
 ::=
-    evaluates_to_seq_or_id:sd CONCAT seq_concat:sq {:RESULT=Node.n("SEQ_CONCAT", sd, sq);:}
-  | evaluates_to_seq_or_id:sd {:RESULT=Node.n(sd);:}
-;
+//  | evaluates_to_seq_or_id:sd {:RESULT=Node.n(sd);:}
+;*/
 
+/*
 evaluates_to_seq_or_id
 ::=
     seq_definition:sd {:RESULT=Node.n(sd);:}
-  | ID:i {:RESULT=Node.n("ID: " + i);:}
-  | evaluates_to_seq_or_id:se slicing:sl {:RESULT=Node.n("SLICED_SEQ", se, sl);:}
-;
+//  | ID:i {:RESULT=Node.n("ID: " + i);:}
+  | evaluates_to_seq_or_id:se slicing:sl {://RESULT=Node.n("SLICED_SEQ", se, sl);:}
+;*/
 
 slicing
 ::=
@@ -418,9 +422,16 @@ operator
 
 variable_decl_init
 ::=
-    ID:i ASSIGN full_exp:e {:RESULT=Node.n("ASSIGNMENT", i, e);:}
+    element:e1 ASSIGN full_exp:e2 {:RESULT=Node.n("ASSIGNMENT", e1, e2);:}
   | var_decl:v ASSIGN full_exp:e {:RESULT=Node.n("ASSIGNMENT", v, e);:}
   | var_decl:v SEMICOL {:RESULT=Node.n(v);:}
+;
+
+element
+::=
+    ID:i {:RESULT=Node.n(i);:}
+  | element:b LSQUARE simple_exp:i RSQUARE {:RESULT=Node.n(b, "Index", i);:}
+  | element:b slicing:sl {:RESULT=Node.n("SLICED_SEQ", b, sl);:}
 ;
 
 var_decl
