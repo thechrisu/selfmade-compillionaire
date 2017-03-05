@@ -1,0 +1,4 @@
+alias void hello;
+
+main {
+};

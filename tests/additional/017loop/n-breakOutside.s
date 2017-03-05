@@ -1,0 +1,6 @@
+main{
+	loop
+	pool
+
+	break;
+};
