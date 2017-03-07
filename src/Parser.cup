@@ -89,7 +89,9 @@ terminal ID;
 // Basic data representations
 terminal INTEGER, FLOAT, BOOL, CHAR, STRING;
 // Boolean
-terminal NOT, AND, OR, IMPLIC;
+terminal NOT, AND, OR, IMPLIC, EQUAL, NEQUAL;
+// If
+terminal IF, FI, THEN, ELSE;
 // Bracket extravaganza
 terminal LPAREN, RPAREN; // ()
 terminal LCURLY, RCURLY; // {}
@@ -129,6 +131,8 @@ terminal MULTI_LINE_COMMENT, SINGLE_LINE_COMMENT; // /#...#/, #...
 /**
   * NON-TERMINALS
   */
+// Conditional
+nonterminal conditional, compound_statement;
 nonterminal element;
 // Variables and types
 nonterminal variable_decl_init, var_decl, type, maybe_type_decl, type_decl, type_def;
@@ -146,7 +150,7 @@ nonterminal slicing, maybe_slicing_simple_exp;
 // Dict
 nonterminal dict_definition, no_trailing_comma_k_v_pairs, zero_or_more_k_v_pairs, dict_element;
 // Boolean
-nonterminal bool_expr, evaluates_to_bool, evaluates_to_bool_or_id, bool_oper, in_expr;
+nonterminal bool_expr, evaluates_to_bool, evaluates_to_bool_or_id, bool_oper, in_expr, comparison_expr, comparison_operator;
 
 /**
   * OLD STUFF
@@ -163,13 +167,16 @@ nonterminal funcs_or_global_decls, global_declarations, func_param_decl, func_bo
 
 precedence left AND, OR, IMPLIC;
 precedence left NOT;
-precedence left EQ, LESS, LESS_EQ, IN;
+precedence left LESS, LESS_EQ, IN;
 precedence left PLUS, MINUS;
 precedence left DIV, MULT;
 precedence left POW;
 precedence left CONCAT;
 precedence left FULLSTOP;
 precedence left ID; //TODO: Delete this line if necessary, it is a dirty hack
+precedence left ELSE;
+//precedence left RETURN;
+precedence left LCURLY;//TODO: Delete this when fixing return, this is a dirty hack
 top_level
 ::=
     funcs_or_global_decls:fog {: if(debug()) System.out.println((Node)fog); :}
@@ -270,12 +277,12 @@ normal_func_body
 // TODO: Add declaration between statements
 func_body_no_return
 ::=
-    LCURLY stmnts:ss RCURLY SEMICOL {:RESULT=Node.n("FUNC_BODY_NO_RETURN", ss);:}
+    compound_statement:ss SEMICOL {:RESULT=Node.n("FUNC_BODY_NO_RETURN", ss);:}
 ;
 
 func_body_with_return
 ::=
-    LCURLY stmnts:ss RCURLY type_decl:td SEMICOL {:RESULT=Node.n("FUNC_BODY_WITH_RETURN", ss, td);:}
+    compound_statement:ss type_decl:td SEMICOL {:RESULT=Node.n("FUNC_BODY_WITH_RETURN", ss, td);:}
 ;
 
 stmnts
@@ -293,6 +300,20 @@ stmnt
   | return_statement:re {:RESULT=Node.n(re);:}
   | alias_statement:as {:RESULT=Node.n(as);:}
   | type_def:td {:RESULT=Node.n(td);:}
+  | conditional:c {:RESULT=Node.n(c);:}
+  | compound_statement:cs {:RESULT=Node.n(cs);:}
+;
+
+compound_statement
+::=
+   LCURLY stmnts:ss RCURLY {:RESULT=Node.n("COMPOUND", ss);:}
+;
+
+//TODO: Explain in ambiguities.txt that we also allow compound ifs
+conditional
+::=
+    IF LPAREN bool_expr:be RPAREN THEN stmnt:ss FI {:RESULT=Node.n("IF_STATEMENT", be, ss);:}
+  | IF LPAREN bool_expr:be RPAREN THEN stmnt:s1 ELSE stmnt:s2 FI {:RESULT=Node.n("IF_ELSE", be, s1, s2);:}
 ;
 
 alias_statement
@@ -335,7 +356,22 @@ bool_expr
  | evaluates_to_bool_or_id:etb1 bool_oper:bo evaluates_to_bool_or_id:etb2 {:RESULT=Node.n(bo, etb1, etb2);:}
  | NOT bool_expr:be {:RESULT=Node.n("NOT", be);:}
  | in_expr:ie {:RESULT=Node.n(ie);:}
+ | comparison_expr:ce {:RESULT=Node.n(ce);:}
 ;
+
+comparison_expr
+::=
+   simple_exp:se1 comparison_operator:co simple_exp:se2 {:RESULT=Node.n("Comparison_expr", se1, co, se2);:}
+;
+
+comparison_operator
+::=
+    LESS {:RESULT=Node.n("LESS");:}
+  | LESS_EQ {:RESULT=Node.n("LESS_EQ");:}
+  | EQUAL  {:RESULT=Node.n("=");:}
+  | NEQUAL {:RESULT=Node.n("!=");:}
+;
+
 
 //TODO: Reason about precedence of in operator
 //TODO: `simple_exp`? Really? Only `ID` can work here. -Tim

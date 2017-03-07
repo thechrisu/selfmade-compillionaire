@@ -120,6 +120,11 @@ StringVar = (\"({Char}|(\\(\\|\")))*\")
   "dict"        { return symbol(sym.DICT);        }
   "top"         { return symbol(sym.TYPE_TOP);    }
   "in"          { return symbol(sym.IN);          }
+  "if"          { return symbol(sym.IF);          }
+  "fi"          { return symbol(sym.FI);          }
+  "then"          { return symbol(sym.THEN);          }
+  "else"          { return symbol(sym.ELSE);          }
+
   {CharVar}     { return symbol(sym.CHAR);                   }
   {StringVar}   { return symbol(sym.STRING);                 }
   {Integer}     { return symbol(sym.INTEGER,
@@ -145,6 +150,8 @@ StringVar = (\"({Char}|(\\(\\|\")))*\")
   "*"           { return symbol(sym.MULT);       }
   "^"           { return symbol(sym.POW);        }
   "/"           { return symbol(sym.DIV);        }
+  "="          { return symbol(sym.EQUAL);     }
+  "!="          { return symbol(sym.NEQUAL);     }
   "("           { return symbol(sym.LPAREN);     }
   ")"           { return symbol(sym.RPAREN);     }
   "{"           { return symbol(sym.LCURLY);     }
