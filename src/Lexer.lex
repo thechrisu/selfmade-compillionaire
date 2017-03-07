@@ -108,7 +108,7 @@ Digit = [0-9]
 IdChar = {Letter} | {Digit} | "_"
 Identifier = {Letter}{IdChar}*
 Integer = ({Digit}+)
-Float = ({Digit}*\.?{Digit}+)
+Float = ({Digit}*\.{Digit}+)
 //TODO what format to have for floats? e.g. do we allow -.1 for -.0.1,
 Bool = (T|F)
 CharWithout = ([a-zA-Z\x21\x23-\x40\x5b-\x60\x7b-\x7e]|\s)
