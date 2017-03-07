@@ -101,6 +101,8 @@ terminal PLUS, MINUS, MULT, DIV, POW;
 terminal EQ, LESS, LESS_EQ; // =, <, <=
 // Dictionaries and sequences (collections)
 terminal DICT, SEQ, IN; // dict, seq
+//Field stuff
+terminal FULLSTOP;
 // Types
 terminal TYPE_BOOL, TYPE_CHAR, TYPE_INT, TYPE_RAT, TYPE_FLOAT, TYPE_STRING, TYPE_TOP;
 // Other operators
@@ -167,6 +169,7 @@ precedence left PLUS, MINUS;
 precedence left DIV, MULT;
 precedence left POW;
 precedence left CONCAT;
+precedence left FULLSTOP;
 
 top_level
 ::=
@@ -456,6 +459,7 @@ element
     ID:i {:RESULT=Node.n(i);:}
   | element:b LSQUARE simple_exp:i RSQUARE {:RESULT=Node.n(b, "Index", i);:}
   | element:b slicing:sl {:RESULT=Node.n("SLICED_SEQ", b, sl);:}
+  | element:e1 FULLSTOP element:e2 {:RESULT=Node.n("FIELD_REFERENCE", e1, e2);:}
 ;
 
 var_decl
