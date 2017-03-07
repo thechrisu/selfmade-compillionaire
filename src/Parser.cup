@@ -34,6 +34,7 @@ parser code {:
         if(o instanceof Node) node = (Node) o;
         else if(o instanceof String) node = new Node((String) o);
         else node = new Node(o.toString());
+        System.out.println(node);
         return node;
     }
 
