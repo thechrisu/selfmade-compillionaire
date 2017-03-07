@@ -99,6 +99,7 @@ Return = ((return{Whitespace}+)|(return;))
 CharVar = (\'({Char}|(\\(\\|\')))\')
 Alias = (alias{Whitespace}+)
 StringVar = (\"({Char}|(\\(\\|\")))*\")
+QuestionMark = (\?)
 %%
 <YYINITIAL> {
   {MultiLineComment}     { return symbol(sym.MULTI_LINE_COMMENT);   }
@@ -107,7 +108,7 @@ StringVar = (\"({Char}|(\\(\\|\")))*\")
   {Read}        { return symbol(sym.READ);        }
   {Print}       { return symbol(sym.PRINT);       }
   {Return}      { return symbol(sym.RETURN);      }
-  {Alias}       { return symbol(sym.ALIAS);      }
+  {Alias}       { return symbol(sym.ALIAS);       }
   "main"        { return symbol(sym.MAIN);        }
   "tdef"        { return symbol(sym.TDEF);        }
   "fdef"        { return symbol(sym.FDEF);        }
@@ -122,11 +123,10 @@ StringVar = (\"({Char}|(\\(\\|\")))*\")
   "in"          { return symbol(sym.IN);          }
   "if"          { return symbol(sym.IF);          }
   "fi"          { return symbol(sym.FI);          }
-  "then"          { return symbol(sym.THEN);          }
-  "else"          { return symbol(sym.ELSE);          }
-
-  {CharVar}     { return symbol(sym.CHAR);                   }
-  {StringVar}   { return symbol(sym.STRING);                 }
+  "then"        { return symbol(sym.THEN);        }
+  "else"        { return symbol(sym.ELSE);        }
+  {CharVar}     { return symbol(sym.CHAR);        }
+  {StringVar}   { return symbol(sym.STRING);      }
   {Integer}     { return symbol(sym.INTEGER,
                                 yytext()); }
   {Float}       { return symbol(sym.FLOAT,
@@ -135,6 +135,7 @@ StringVar = (\"({Char}|(\\(\\|\")))*\")
   {Identifier}  { return symbol(sym.ID, yytext());           }
 
   {Whitespace}  { /* do nothing */               }
+  {QuestionMark} { return symbol(sym.QUESTIONMARK);}
   "!"           { return symbol(sym.NOT);        }
   "&&"          { return symbol(sym.AND);        }
   "||"          { return symbol(sym.OR);         }

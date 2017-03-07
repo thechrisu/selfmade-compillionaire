@@ -84,6 +84,8 @@ parser code {:
   * TERMINALS
   */
 
+// Questionmark
+terminal QUESTIONMARK;
 // Identifier
 terminal ID;
 // Basic data representations
@@ -114,15 +116,13 @@ terminal MULTI_LINE_COMMENT, SINGLE_LINE_COMMENT; // /#...#/, #...
 
 // TODO: Test that function actually returns something of that type (i.e. if func is supposed to have return type int, check there's return int somewhere)
 // TODO: Test for allowed/disallowed ASCII characters as string/char AND for variable names
-// TODO: Test for function calls/predicates before call
 // TODO: Test for capital s in seq, and variations of this
-// TODO: Implication
 // TODO: Seq length checking
 // TODO: Rationals
 // TODO: Loop
 // TODO: If
 // TODO: Break
-// TODO: Test Function calls
+// TODO: Test Function calls further
 // TODO: Don't allow keywords as e.g. function names
 // TODO: Null value
 // TODO: Alias
@@ -131,6 +131,8 @@ terminal MULTI_LINE_COMMENT, SINGLE_LINE_COMMENT; // /#...#/, #...
 /**
   * NON-TERMINALS
   */
+// functioncall
+nonterminal function_call;
 // Conditional
 nonterminal conditional, compound_statement;
 nonterminal element;
@@ -175,8 +177,10 @@ precedence left CONCAT;
 precedence left FULLSTOP;
 precedence left ID; //TODO: Delete this line if necessary, it is a dirty hack
 precedence left ELSE;
-//precedence left RETURN;
-precedence left LCURLY;//TODO: Delete this when fixing return, this is a dirty hack
+precedence left QUESTIONMARK;
+precedence left LCURLY;
+//precedence left RETURN; //TODO: REMOVE THIS IF FIXED WHITESPACE HACK
+
 top_level
 ::=
     funcs_or_global_decls:fog {: if(debug()) System.out.println((Node)fog); :}
@@ -222,6 +226,7 @@ global_declaration_except_main
   | variable_decl_init:v {:RESULT=Node.n(v);:}
   | type_def:td {:RESULT=Node.n(td);:}
   | alias_statement:as {:RESULT=Node.n(as);:}
+  | function_call:fc SEMICOL {:RESULT=Node.n(fc);:}
 ;
 
 type_def
@@ -302,6 +307,7 @@ stmnt
   | type_def:td {:RESULT=Node.n(td);:}
   | conditional:c {:RESULT=Node.n(c);:}
   | compound_statement:cs {:RESULT=Node.n(cs);:}
+  | function_call:fc SEMICOL {:RESULT=Node.n(fc);:}
 ;
 
 compound_statement
@@ -348,6 +354,12 @@ simple_exp
   | dict_definition:d {:RESULT=Node.n(d);:}
   | simple_exp:e1 operator:o simple_exp:e2 {:RESULT=Node.n(o, e1, e2);:}
   | LPAREN simple_exp:e RPAREN {:RESULT=Node.n("PARENS", "(", e, ")");:}
+  | function_call:fc {:RESULT=Node.n(fc);:}
+;
+
+function_call
+::=
+  QUESTIONMARK boolean_or_simple:be QUESTIONMARK ID:i LPAREN zero_or_more_comma_separated_expressions:args RPAREN {:RESULT=Node.n("FUNCTIONCALL", be, i, args);:}
 ;
 
 bool_expr
