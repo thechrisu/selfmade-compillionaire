@@ -291,6 +291,8 @@ stmnt
   | read_statement:r {:RESULT=Node.n(r);:}
   | print_statement:p {:RESULT=Node.n(p);:}
   | return_statement:re {:RESULT=Node.n(re);:}
+  | alias_statement:as {:RESULT=Node.n(as);:}
+  | type_def:td {:RESULT=Node.n(td);:}
 ;
 
 alias_statement
@@ -441,6 +443,7 @@ print_statement
 return_statement
 ::=
     RETURN full_exp:e {:RESULT = Node.n("RETURN", e);:}
+  | RETURN {:RESULT=Node.n("RETURN_HACK");:} //TODO: Fix return, bc right now we allow e.g. return; something;
 ;
 
 operator
