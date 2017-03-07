@@ -51,6 +51,18 @@ import java_cup.runtime.*;
           System.out.printf("BOOL %s", value); break;
       case sym.CHAR:
           System.out.printf("CHAR %s", value); break;
+      case sym.ALIAS:
+          System.out.printf("ALIAS"); break;
+      case sym.SEQ:
+          System.out.print("SEQ"); break;
+      case sym.TYPE_CHAR:
+          System.out.print("TYPE_CHAR"); break;
+      case sym.LANGLE:
+          System.out.print("<"); break;
+      case sym.RANGLE:
+          System.out.print(">"); break;
+      default:
+          System.out.print(type);
     }
     System.out.print(">  ");
   }
@@ -83,8 +95,9 @@ Bool = (T|F)
 Char = ([a-zA-Z\x21-\x40\x5b-\x60\x7b-\x7e]|\s)
 Print = (print{Whitespace}+)
 Read = (read{Whitespace}+)
-Return = (return{Whitespace}+)
+Return = ((return{Whitespace}+)|(return;))
 CharVar = (\'({Char}|(\\(\\|\')))\')
+Alias = (alias{Whitespace}+)
 StringVar = (\"({Char}|(\\(\\|\")))*\")
 %%
 <YYINITIAL> {
@@ -94,18 +107,24 @@ StringVar = (\"({Char}|(\\(\\|\")))*\")
   {Read}        { return symbol(sym.READ);        }
   {Print}       { return symbol(sym.PRINT);       }
   {Return}      { return symbol(sym.RETURN);      }
+  {Alias}       { return symbol(sym.ALIAS);      }
   "main"        { return symbol(sym.MAIN);        }
+  "tdef"        { return symbol(sym.TDEF);        }
   "fdef"        { return symbol(sym.FDEF);        }
   "bool"        { return symbol(sym.TYPE_BOOL);   }
   "char"        { return symbol(sym.TYPE_CHAR);   }
   "int"         { return symbol(sym.TYPE_INT);    }
   "rat"         { return symbol(sym.TYPE_RAT);    }
   "float"       { return symbol(sym.TYPE_FLOAT);  }
-  "string"      { return symbol(sym.TYPE_STRING); }
   "seq"         { return symbol(sym.SEQ);         }
   "dict"        { return symbol(sym.DICT);        }
   "top"         { return symbol(sym.TYPE_TOP);    }
   "in"          { return symbol(sym.IN);          }
+  "if"          { return symbol(sym.IF);          }
+  "fi"          { return symbol(sym.FI);          }
+  "then"          { return symbol(sym.THEN);          }
+  "else"          { return symbol(sym.ELSE);          }
+
   {CharVar}     { return symbol(sym.CHAR);                   }
   {StringVar}   { return symbol(sym.STRING);                 }
   {Integer}     { return symbol(sym.INTEGER,
@@ -131,6 +150,8 @@ StringVar = (\"({Char}|(\\(\\|\")))*\")
   "*"           { return symbol(sym.MULT);       }
   "^"           { return symbol(sym.POW);        }
   "/"           { return symbol(sym.DIV);        }
+  "="          { return symbol(sym.EQUAL);     }
+  "!="          { return symbol(sym.NEQUAL);     }
   "("           { return symbol(sym.LPAREN);     }
   ")"           { return symbol(sym.RPAREN);     }
   "{"           { return symbol(sym.LCURLY);     }
@@ -139,6 +160,7 @@ StringVar = (\"({Char}|(\\(\\|\")))*\")
   "]"           { return symbol(sym.RSQUARE);    }
   "<"           { return symbol(sym.LANGLE);     }
   ">"           { return symbol(sym.RANGLE);     }
+  "."           { return symbol(sym.FULLSTOP);   }
 }
 
 [^]  {

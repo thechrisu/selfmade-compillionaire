@@ -8,7 +8,7 @@ parser code {:
   public boolean  debug(){return debug;}
   public void     debug(boolean b){debug = b;}
   public boolean  syntaxErrors;
-  private boolean debug = true;
+  private boolean debug = false;
 
   static class Node {
     public ArrayList<Node> children;
@@ -89,7 +89,9 @@ terminal ID;
 // Basic data representations
 terminal INTEGER, FLOAT, BOOL, CHAR, STRING;
 // Boolean
-terminal NOT, AND, OR, IMPLIC;
+terminal NOT, AND, OR, IMPLIC, EQUAL, NEQUAL;
+// If
+terminal IF, FI, THEN, ELSE;
 // Bracket extravaganza
 terminal LPAREN, RPAREN; // ()
 terminal LCURLY, RCURLY; // {}
@@ -101,8 +103,10 @@ terminal PLUS, MINUS, MULT, DIV, POW;
 terminal EQ, LESS, LESS_EQ; // =, <, <=
 // Dictionaries and sequences (collections)
 terminal DICT, SEQ, IN; // dict, seq
+//Field stuff
+terminal FULLSTOP, ALIAS;
 // Types
-terminal TYPE_BOOL, TYPE_CHAR, TYPE_INT, TYPE_RAT, TYPE_FLOAT, TYPE_STRING, TYPE_TOP;
+terminal TYPE_BOOL, TYPE_CHAR, TYPE_INT, TYPE_RAT, TYPE_FLOAT, TYPE_TOP;
 // Other operators
 terminal CONCAT, SEMICOL, COLON, ASSIGN, COMMA, UNDERSCORE; // ::, ;, :, :=, \,, _
 // Comments
@@ -120,17 +124,19 @@ terminal MULTI_LINE_COMMENT, SINGLE_LINE_COMMENT; // /#...#/, #...
 // TODO: Break
 // TODO: Test Function calls
 // TODO: Don't allow keywords as e.g. function names
-// TODO: Check for fields access (e.g. p.age)
-// TODO: Assignment to custom type
 // TODO: Null value
 // TODO: Alias
 // TODO: Are declarations only allowed before main?
+// TODO: In function, declarations have to occur first
 /**
   * NON-TERMINALS
   */
-
+// Conditional
+nonterminal conditional, compound_statement;
+nonterminal element;
 // Variables and types
-nonterminal variable_decl_init, var_decl, type, maybe_type_decl, type_decl;
+nonterminal variable_decl_init, var_decl, type, maybe_type_decl, type_decl, type_def;
+nonterminal zero_or_more_type_def_pairs, no_trailing_colon_type_def_pairs, type_def_element;
 nonterminal type_seq, type_dict, collect_type;
 // Functions
 nonterminal global_declaration_except_main;
@@ -144,7 +150,7 @@ nonterminal slicing, maybe_slicing_simple_exp;
 // Dict
 nonterminal dict_definition, no_trailing_comma_k_v_pairs, zero_or_more_k_v_pairs, dict_element;
 // Boolean
-nonterminal bool_expr, evaluates_to_bool, evaluates_to_bool_or_id, bool_oper, in_expr;
+nonterminal bool_expr, evaluates_to_bool, evaluates_to_bool_or_id, bool_oper, in_expr, comparison_expr, comparison_operator;
 
 /**
   * OLD STUFF
@@ -152,20 +158,25 @@ nonterminal bool_expr, evaluates_to_bool, evaluates_to_bool_or_id, bool_oper, in
 
 // Do something with ILLEGAL_CHARARCTER or drop it.
 terminal BADCHAR; //TODO: Return this? When is it used?
-terminal PRINT, READ, RETURN, MAIN, FDEF;
+terminal PRINT, READ, RETURN, MAIN, FDEF, TDEF;
 nonterminal stmnts, stmnt, top_level;
 nonterminal full_exp, simple_exp, boolean_or_simple, operator;
-nonterminal print_statement, read_statement, return_statement;
+nonterminal print_statement, read_statement, return_statement, alias_statement;
 nonterminal funcs_or_main, main_func, normal_func, normal_func_body;
 nonterminal funcs_or_global_decls, global_declarations, func_param_decl, func_body_no_return, func_body_with_return;
 
 precedence left AND, OR, IMPLIC;
 precedence left NOT;
-precedence left EQ, LESS, LESS_EQ, IN;
+precedence left LESS, LESS_EQ, IN;
 precedence left PLUS, MINUS;
 precedence left DIV, MULT;
 precedence left POW;
-
+precedence left CONCAT;
+precedence left FULLSTOP;
+precedence left ID; //TODO: Delete this line if necessary, it is a dirty hack
+precedence left ELSE;
+//precedence left RETURN;
+precedence left LCURLY;//TODO: Delete this when fixing return, this is a dirty hack
 top_level
 ::=
     funcs_or_global_decls:fog {: if(debug()) System.out.println((Node)fog); :}
@@ -209,6 +220,30 @@ global_declaration_except_main
     any_comment:c {:RESULT=Node.n(c);:}
   | normal_func:f {:RESULT=Node.n(f);:}
   | variable_decl_init:v {:RESULT=Node.n(v);:}
+  | type_def:td {:RESULT=Node.n(td);:}
+  | alias_statement:as {:RESULT=Node.n(as);:}
+;
+
+type_def
+::=
+    TDEF ID:i LCURLY zero_or_more_type_def_pairs:dd RCURLY SEMICOL {:RESULT=Node.n("TDEF", i, dd);:}
+;
+
+zero_or_more_type_def_pairs
+::=
+    no_trailing_colon_type_def_pairs:kv {: RESULT=Node.n(kv); :}
+  | /* nuffin */ {:RESULT=Node.n("EMPTY_TDEF");:}
+;
+
+no_trailing_colon_type_def_pairs
+::=
+     type_def_element:kv COMMA no_trailing_colon_type_def_pairs:kvs {:RESULT=Node.n("NON_ENDING_KV_LIST", kv, kvs);:}
+   | type_def_element:kv {:RESULT=Node.n(kv);:}
+
+;
+
+type_def_element
+::= boolean_or_simple:k COLON type:v {:RESULT=Node.n("TYPE_DEF_ELEM", k, v);:}
 ;
 
 normal_func
@@ -242,17 +277,17 @@ normal_func_body
 // TODO: Add declaration between statements
 func_body_no_return
 ::=
-    LCURLY stmnts:ss RCURLY SEMICOL {:RESULT=Node.n("FUNC_BODY_NO_RETURN", ss);:}
+    compound_statement:ss SEMICOL {:RESULT=Node.n("FUNC_BODY_NO_RETURN", ss);:}
 ;
 
 func_body_with_return
 ::=
-    LCURLY stmnts:ss RCURLY type_decl:td SEMICOL {:RESULT=Node.n("FUNC_BODY_WITH_RETURN", ss, td);:}
+    compound_statement:ss type_decl:td SEMICOL {:RESULT=Node.n("FUNC_BODY_WITH_RETURN", ss, td);:}
 ;
 
 stmnts
 ::=
-    stmnt:s {:RESULT=Node.n(s);:}
+    stmnt:s {:RESULT=Node.n(s);:} //TODO: Enforce that declarations come before the other stuff
   | stmnt:s stmnts:ss {:RESULT=Node.n(s, ss);:}
 ;
 
@@ -263,6 +298,27 @@ stmnt
   | read_statement:r {:RESULT=Node.n(r);:}
   | print_statement:p {:RESULT=Node.n(p);:}
   | return_statement:re {:RESULT=Node.n(re);:}
+  | alias_statement:as {:RESULT=Node.n(as);:}
+  | type_def:td {:RESULT=Node.n(td);:}
+  | conditional:c {:RESULT=Node.n(c);:}
+  | compound_statement:cs {:RESULT=Node.n(cs);:}
+;
+
+compound_statement
+::=
+   LCURLY stmnts:ss RCURLY {:RESULT=Node.n("COMPOUND", ss);:}
+;
+
+//TODO: Explain in ambiguities.txt that we also allow compound ifs
+conditional
+::=
+    IF LPAREN bool_expr:be RPAREN THEN stmnt:ss FI {:RESULT=Node.n("IF_STATEMENT", be, ss);:}
+  | IF LPAREN bool_expr:be RPAREN THEN stmnt:s1 ELSE stmnt:s2 FI {:RESULT=Node.n("IF_ELSE", be, s1, s2);:}
+;
+
+alias_statement
+::=
+    ALIAS type:t ID:i SEMICOL {:RESULT=Node.n("ALIAS", t, i);:}
 ;
 
 full_exp
@@ -284,8 +340,11 @@ simple_exp
   | INTEGER:i UNDERSCORE INTEGER:j DIV INTEGER:k {:RESULT=Node.n("MIXED_RAT", i, j, k);:}
   | CHAR:i {:RESULT=Node.n("CHARVAR");:}
   | STRING:i {:RESULT=Node.n("STRING");:}
-  | seq_concat:s {:RESULT=Node.n(s);:}
+  | simple_exp:sd CONCAT simple_exp:sq {:RESULT=Node.n("SEQ_CONCAT", sd, sq);:}
+//  | seq_concat:s {:RESULT=Node.n(s);:}
 //  | ID:i {:RESULT=Node.n(i);:}
+  | element:e {:RESULT=Node.n(e); :}
+  | seq_definition:s {:RESULT=Node.n(s); :}
   | dict_definition:d {:RESULT=Node.n(d);:}
   | simple_exp:e1 operator:o simple_exp:e2 {:RESULT=Node.n(o, e1, e2);:}
   | LPAREN simple_exp:e RPAREN {:RESULT=Node.n("PARENS", "(", e, ")");:}
@@ -297,7 +356,22 @@ bool_expr
  | evaluates_to_bool_or_id:etb1 bool_oper:bo evaluates_to_bool_or_id:etb2 {:RESULT=Node.n(bo, etb1, etb2);:}
  | NOT bool_expr:be {:RESULT=Node.n("NOT", be);:}
  | in_expr:ie {:RESULT=Node.n(ie);:}
+ | comparison_expr:ce {:RESULT=Node.n(ce);:}
 ;
+
+comparison_expr
+::=
+   simple_exp:se1 comparison_operator:co simple_exp:se2 {:RESULT=Node.n("Comparison_expr", se1, co, se2);:}
+;
+
+comparison_operator
+::=
+    LESS {:RESULT=Node.n("LESS");:}
+  | LESS_EQ {:RESULT=Node.n("LESS_EQ");:}
+  | EQUAL  {:RESULT=Node.n("=");:}
+  | NEQUAL {:RESULT=Node.n("!=");:}
+;
+
 
 //TODO: Reason about precedence of in operator
 //TODO: `simple_exp`? Really? Only `ID` can work here. -Tim
@@ -328,18 +402,18 @@ bool_oper
   | IMPLIC {:RESULT=Node.n("=>");:}
 ;
 
-seq_concat
+/*seq_concat
 ::=
-    evaluates_to_seq_or_id:sd CONCAT seq_concat:sq {:RESULT=Node.n("SEQ_CONCAT", sd, sq);:}
-  | evaluates_to_seq_or_id:sd {:RESULT=Node.n(sd);:}
-;
+//  | evaluates_to_seq_or_id:sd {:RESULT=Node.n(sd);:}
+;*/
 
+/*
 evaluates_to_seq_or_id
 ::=
     seq_definition:sd {:RESULT=Node.n(sd);:}
-  | ID:i {:RESULT=Node.n("ID: " + i);:}
-  | evaluates_to_seq_or_id:se slicing:sl {:RESULT=Node.n("SLICED_SEQ", se, sl);:}
-;
+//  | ID:i {:RESULT=Node.n("ID: " + i);:}
+  | evaluates_to_seq_or_id:se slicing:sl {://RESULT=Node.n("SLICED_SEQ", se, sl);:}
+;*/
 
 slicing
 ::=
@@ -405,6 +479,7 @@ print_statement
 return_statement
 ::=
     RETURN full_exp:e {:RESULT = Node.n("RETURN", e);:}
+  | RETURN {:RESULT=Node.n("RETURN_HACK");:} //TODO: Fix return, bc right now we allow e.g. return; something;
 ;
 
 operator
@@ -418,9 +493,17 @@ operator
 
 variable_decl_init
 ::=
-    ID:i ASSIGN full_exp:e {:RESULT=Node.n("ASSIGNMENT", i, e);:}
+    element:e1 ASSIGN full_exp:e2 {:RESULT=Node.n("ASSIGNMENT", e1, e2);:}
   | var_decl:v ASSIGN full_exp:e {:RESULT=Node.n("ASSIGNMENT", v, e);:}
   | var_decl:v SEMICOL {:RESULT=Node.n(v);:}
+;
+
+element
+::=
+    ID:i {:RESULT=Node.n(i);:}
+  | element:b LSQUARE simple_exp:i RSQUARE {:RESULT=Node.n(b, "Index", i);:}
+  | element:b slicing:sl {:RESULT=Node.n("SLICED_SEQ", b, sl);:}
+  | element:e1 FULLSTOP element:e2 {:RESULT=Node.n("FIELD_REFERENCE", e1, e2);:}
 ;
 
 var_decl
@@ -440,7 +523,6 @@ type
   | TYPE_INT    {:RESULT=Node.n("INT");:}
   | TYPE_RAT    {:RESULT=Node.n("RAT");:}
   | TYPE_FLOAT  {:RESULT=Node.n("FLOAT");:}
-  | TYPE_STRING {:RESULT=Node.n("STRING");:}
   | type_seq:s  {:RESULT=Node.n(s);:}
   | type_dict:d {:RESULT=Node.n(d);:}
   | ID:i        {:RESULT=Node.n("CUSTOM_TYPE", i);:}

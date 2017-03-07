@@ -5,6 +5,8 @@ in sequence slicing, like "foo = bar[:]".
 Our solution: this is possible in many other languages that support list
 slicing (like Python), so our compiler accepts this syntax.
 
+// TODO: We do not allow overwriting existing keywords using `alias`
+
 Paragraph: 3
 Problem: TODO: Can multiline? comments appear mid-statement?
 Our solution: TODO
@@ -71,3 +73,4 @@ TODO: Explain that table on website uses ASCII 166 (broken pipe ¦) in place of 
 not ASCII 126, because pipe (|) is used very commonly and the table mentions ASCII 123-126 in the surrounding rows,
 implicating that probably they meant ASCII 124, and not ASCII 166
 TODO: Allow newline/tab for chars/strings?
+TODO: Write about whether we predefine strings
