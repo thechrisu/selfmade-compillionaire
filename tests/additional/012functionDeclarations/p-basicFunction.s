@@ -1,4 +1,0 @@
-fdef void x () {};
-
-main {
-};
