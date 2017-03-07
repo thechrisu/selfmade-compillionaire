@@ -140,6 +140,7 @@ StringVar = (\"({Char}|(\\(\\|\")))*\")
   "]"           { return symbol(sym.RSQUARE);    }
   "<"           { return symbol(sym.LANGLE);     }
   ">"           { return symbol(sym.RANGLE);     }
+  "."           { return symbol(sym.FULLSTOP);   }
 }
 
 [^]  {
