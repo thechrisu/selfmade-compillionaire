@@ -8,7 +8,7 @@ parser code {:
   public boolean  debug(){return debug;}
   public void     debug(boolean b){debug = b;}
   public boolean  syntaxErrors;
-  private boolean debug = true;
+  private boolean debug = false;
 
   static class Node {
     public ArrayList<Node> children;
@@ -130,7 +130,8 @@ terminal MULTI_LINE_COMMENT, SINGLE_LINE_COMMENT; // /#...#/, #...
   */
 nonterminal element;
 // Variables and types
-nonterminal variable_decl_init, var_decl, type, maybe_type_decl, type_decl;
+nonterminal variable_decl_init, var_decl, type, maybe_type_decl, type_decl, type_def;
+nonterminal zero_or_more_type_def_pairs, no_trailing_colon_type_def_pairs, type_def_element;
 nonterminal type_seq, type_dict, collect_type;
 // Functions
 nonterminal global_declaration_except_main;
@@ -152,7 +153,7 @@ nonterminal bool_expr, evaluates_to_bool, evaluates_to_bool_or_id, bool_oper, in
 
 // Do something with ILLEGAL_CHARARCTER or drop it.
 terminal BADCHAR; //TODO: Return this? When is it used?
-terminal PRINT, READ, RETURN, MAIN, FDEF;
+terminal PRINT, READ, RETURN, MAIN, FDEF, TDEF;
 nonterminal stmnts, stmnt, top_level;
 nonterminal full_exp, simple_exp, boolean_or_simple, operator;
 nonterminal print_statement, read_statement, return_statement;
@@ -210,6 +211,29 @@ global_declaration_except_main
     any_comment:c {:RESULT=Node.n(c);:}
   | normal_func:f {:RESULT=Node.n(f);:}
   | variable_decl_init:v {:RESULT=Node.n(v);:}
+  | type_def:td {:RESULT=Node.n(td);:}
+;
+
+type_def
+::=
+    TDEF ID:i LCURLY zero_or_more_type_def_pairs:dd RCURLY SEMICOL {:RESULT=Node.n("TDEF", i, dd);:}
+;
+
+zero_or_more_type_def_pairs
+::=
+    no_trailing_colon_type_def_pairs:kv {: RESULT=Node.n(kv); :}
+  | /* nuffin */ {:RESULT=Node.n("EMPTY_TDEF");:}
+;
+
+no_trailing_colon_type_def_pairs
+::=
+     type_def_element:kv COMMA no_trailing_colon_type_def_pairs:kvs {:RESULT=Node.n("NON_ENDING_KV_LIST", kv, kvs);:}
+   | type_def_element:kv {:RESULT=Node.n(kv);:}
+
+;
+
+type_def_element
+::= boolean_or_simple:k COLON type:v {:RESULT=Node.n("TYPE_DEF_ELEM", k, v);:}
 ;
 
 normal_func

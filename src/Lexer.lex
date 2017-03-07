@@ -95,6 +95,7 @@ StringVar = (\"({Char}|(\\(\\|\")))*\")
   {Print}       { return symbol(sym.PRINT);       }
   {Return}      { return symbol(sym.RETURN);      }
   "main"        { return symbol(sym.MAIN);        }
+  "tdef"        { return symbol(sym.TDEF);        }
   "fdef"        { return symbol(sym.FDEF);        }
   "bool"        { return symbol(sym.TYPE_BOOL);   }
   "char"        { return symbol(sym.TYPE_CHAR);   }
