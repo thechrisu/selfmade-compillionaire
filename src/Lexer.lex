@@ -51,6 +51,18 @@ import java_cup.runtime.*;
           System.out.printf("BOOL %s", value); break;
       case sym.CHAR:
           System.out.printf("CHAR %s", value); break;
+      case sym.ALIAS:
+          System.out.printf("ALIAS"); break;
+      case sym.SEQ:
+          System.out.print("SEQ"); break;
+      case sym.TYPE_CHAR:
+          System.out.print("TYPE_CHAR"); break;
+      case sym.LANGLE:
+          System.out.print("<"); break;
+      case sym.RANGLE:
+          System.out.print(">"); break;
+      default:
+          System.out.print(type);
     }
     System.out.print(">  ");
   }
@@ -85,6 +97,7 @@ Print = (print{Whitespace}+)
 Read = (read{Whitespace}+)
 Return = (return{Whitespace}+)
 CharVar = (\'({Char}|(\\(\\|\')))\')
+Alias = (alias{Whitespace}+)
 StringVar = (\"({Char}|(\\(\\|\")))*\")
 %%
 <YYINITIAL> {
@@ -94,6 +107,7 @@ StringVar = (\"({Char}|(\\(\\|\")))*\")
   {Read}        { return symbol(sym.READ);        }
   {Print}       { return symbol(sym.PRINT);       }
   {Return}      { return symbol(sym.RETURN);      }
+  {Alias}       { return symbol(sym.ALIAS);      }
   "main"        { return symbol(sym.MAIN);        }
   "tdef"        { return symbol(sym.TDEF);        }
   "fdef"        { return symbol(sym.FDEF);        }
@@ -102,7 +116,6 @@ StringVar = (\"({Char}|(\\(\\|\")))*\")
   "int"         { return symbol(sym.TYPE_INT);    }
   "rat"         { return symbol(sym.TYPE_RAT);    }
   "float"       { return symbol(sym.TYPE_FLOAT);  }
-  "string"      { return symbol(sym.TYPE_STRING); }
   "seq"         { return symbol(sym.SEQ);         }
   "dict"        { return symbol(sym.DICT);        }
   "top"         { return symbol(sym.TYPE_TOP);    }

@@ -34,7 +34,6 @@ parser code {:
         if(o instanceof Node) node = (Node) o;
         else if(o instanceof String) node = new Node((String) o);
         else node = new Node(o.toString());
-        System.out.println(node);
         return node;
     }
 
@@ -102,9 +101,9 @@ terminal EQ, LESS, LESS_EQ; // =, <, <=
 // Dictionaries and sequences (collections)
 terminal DICT, SEQ, IN; // dict, seq
 //Field stuff
-terminal FULLSTOP;
+terminal FULLSTOP, ALIAS;
 // Types
-terminal TYPE_BOOL, TYPE_CHAR, TYPE_INT, TYPE_RAT, TYPE_FLOAT, TYPE_STRING, TYPE_TOP;
+terminal TYPE_BOOL, TYPE_CHAR, TYPE_INT, TYPE_RAT, TYPE_FLOAT, TYPE_TOP;
 // Other operators
 terminal CONCAT, SEMICOL, COLON, ASSIGN, COMMA, UNDERSCORE; // ::, ;, :, :=, \,, _
 // Comments
@@ -122,11 +121,10 @@ terminal MULTI_LINE_COMMENT, SINGLE_LINE_COMMENT; // /#...#/, #...
 // TODO: Break
 // TODO: Test Function calls
 // TODO: Don't allow keywords as e.g. function names
-// TODO: Check for fields access (e.g. p.age)
-// TODO: Assignment to custom type
 // TODO: Null value
 // TODO: Alias
 // TODO: Are declarations only allowed before main?
+// TODO: In function, declarations have to occur first
 /**
   * NON-TERMINALS
   */
@@ -158,7 +156,7 @@ terminal BADCHAR; //TODO: Return this? When is it used?
 terminal PRINT, READ, RETURN, MAIN, FDEF, TDEF;
 nonterminal stmnts, stmnt, top_level;
 nonterminal full_exp, simple_exp, boolean_or_simple, operator;
-nonterminal print_statement, read_statement, return_statement;
+nonterminal print_statement, read_statement, return_statement, alias_statement;
 nonterminal funcs_or_main, main_func, normal_func, normal_func_body;
 nonterminal funcs_or_global_decls, global_declarations, func_param_decl, func_body_no_return, func_body_with_return;
 
@@ -170,7 +168,7 @@ precedence left DIV, MULT;
 precedence left POW;
 precedence left CONCAT;
 precedence left FULLSTOP;
-
+precedence left ID; //TODO: Delete this line if necessary, it is a dirty hack
 top_level
 ::=
     funcs_or_global_decls:fog {: if(debug()) System.out.println((Node)fog); :}
@@ -215,6 +213,7 @@ global_declaration_except_main
   | normal_func:f {:RESULT=Node.n(f);:}
   | variable_decl_init:v {:RESULT=Node.n(v);:}
   | type_def:td {:RESULT=Node.n(td);:}
+  | alias_statement:as {:RESULT=Node.n(as);:}
 ;
 
 type_def
@@ -280,7 +279,7 @@ func_body_with_return
 
 stmnts
 ::=
-    stmnt:s {:RESULT=Node.n(s);:}
+    stmnt:s {:RESULT=Node.n(s);:} //TODO: Enforce that declarations come before the other stuff
   | stmnt:s stmnts:ss {:RESULT=Node.n(s, ss);:}
 ;
 
@@ -291,6 +290,11 @@ stmnt
   | read_statement:r {:RESULT=Node.n(r);:}
   | print_statement:p {:RESULT=Node.n(p);:}
   | return_statement:re {:RESULT=Node.n(re);:}
+;
+
+alias_statement
+::=
+    ALIAS type:t ID:i SEMICOL {:RESULT=Node.n("ALIAS", t, i);:}
 ;
 
 full_exp
@@ -479,7 +483,6 @@ type
   | TYPE_INT    {:RESULT=Node.n("INT");:}
   | TYPE_RAT    {:RESULT=Node.n("RAT");:}
   | TYPE_FLOAT  {:RESULT=Node.n("FLOAT");:}
-  | TYPE_STRING {:RESULT=Node.n("STRING");:}
   | type_seq:s  {:RESULT=Node.n(s);:}
   | type_dict:d {:RESULT=Node.n(d);:}
   | ID:i        {:RESULT=Node.n("CUSTOM_TYPE", i);:}
