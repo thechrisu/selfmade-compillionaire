@@ -17,6 +17,10 @@ import java_cup.runtime.*;
 
     System.out.print("<");
     switch(type){
+      case sym.LOOP:
+        System.out.print("LOOP"); break;
+      case sym.MAIN:
+        System.out.print("MAIN"); break;
       case sym.FDEF:
         System.out.print("FDEF"); break;
       case sym.PRINT:
@@ -116,6 +120,7 @@ Char = ([a-zA-Z\x21-\x40\x5b-\x60\x7b-\x7e]|\s)
 Print = (print{Whitespace}+)
 Read = (read{Whitespace}+)
 Return = ((return{Whitespace}+)|(return;))
+Break = (break({Whitespace}+{Digit}+)?;)
 CharVar = (\'({Char}|(\\(\\|\')))\')
 Alias = (alias{Whitespace}+)
 StringVar = (\"({CharWithout}|(\\(\\|\")))*\")
@@ -129,6 +134,7 @@ QuestionMark = (\?)
   {Print}       { return symbol(sym.PRINT);       }
   {Return}      { return symbol(sym.RETURN);      }
   {Alias}       { return symbol(sym.ALIAS);       }
+  {Break}       { return symbol(sym.BREAK);       }
   "main"        { return symbol(sym.MAIN);        }
   "tdef"        { return symbol(sym.TDEF);        }
   "fdef"        { return symbol(sym.FDEF);        }
@@ -145,6 +151,10 @@ QuestionMark = (\?)
   "fi"          { return symbol(sym.FI);          }
   "then"        { return symbol(sym.THEN);        }
   "else"        { return symbol(sym.ELSE);        }
+  "loop"        { return symbol(sym.LOOP);        }
+  "pool"        { return symbol(sym.POOL);        }
+  {CharVar}     { return symbol(sym.CHAR);        }
+  {StringVar}   { return symbol(sym.STRING);      }
   {CharVar}     { return symbol(sym.CHAR);        }
   {StringVar}   { return symbol(sym.STRING);      }
   {Float}       { return symbol(sym.FLOAT,
