@@ -1,0 +1,5 @@
+main {
+    ?T?func();
+    ??T?boolcall(a)?funccall(3,4);
+    ?T?funcCall(?T?funccall());
+};

@@ -34,7 +34,7 @@ parser code {:
         if(o instanceof Node) node = (Node) o;
         else if(o instanceof String) node = new Node((String) o);
         else node = new Node(o.toString());
-        System.out.println(node);
+        //System.out.println(node);
         return node;
     }
 
@@ -84,6 +84,8 @@ parser code {:
   * TERMINALS
   */
 
+// Questionmark
+terminal QUESTIONMARK;
 // Identifier
 terminal ID;
 // Basic data representations
@@ -102,7 +104,7 @@ terminal LANGLE, RANGLE; // <>
 // Arithemtic operators
 terminal PLUS, MINUS, MULT, DIV, POW;
 // Comparions operators
-terminal EQ, LESS, LESS_EQ; // =, <, <=
+terminal LESS_EQ; // <, <=
 // Dictionaries and sequences (collections)
 terminal DICT, SEQ, IN; // dict, seq
 //Field stuff
@@ -116,15 +118,13 @@ terminal MULTI_LINE_COMMENT, SINGLE_LINE_COMMENT; // /#...#/, #...
 
 // TODO: Test that function actually returns something of that type (i.e. if func is supposed to have return type int, check there's return int somewhere)
 // TODO: Test for allowed/disallowed ASCII characters as string/char AND for variable names
-// TODO: Test for function calls/predicates before call
 // TODO: Test for capital s in seq, and variations of this
-// TODO: Implication
 // TODO: Seq length checking
 // TODO: Rationals
 // TODO: Loop
 // TODO: If
 // TODO: Break
-// TODO: Test Function calls
+// TODO: Test Function calls further
 // TODO: Don't allow keywords as e.g. function names
 // TODO: Null value
 // TODO: Alias
@@ -133,13 +133,15 @@ terminal MULTI_LINE_COMMENT, SINGLE_LINE_COMMENT; // /#...#/, #...
 /**
   * NON-TERMINALS
   */
+// functioncall
+nonterminal function_call;
 // Conditional
 nonterminal conditional, compound_statement;
 nonterminal element;
 // Loops
 nonterminal loop_cycle, loop_stmnts, loop_stmnt;
 // Variables and types
-nonterminal variable_decl_init, var_decl, type, maybe_type_decl, type_decl, type_def;
+nonterminal variable_decl_init, var_decl, type, maybe_type_decl, type_decl, type_def, type_def_assign;
 nonterminal zero_or_more_type_def_pairs, no_trailing_colon_type_def_pairs, type_def_element;
 nonterminal type_seq, type_dict, collect_type;
 // Functions
@@ -147,14 +149,14 @@ nonterminal global_declaration_except_main;
 // Comments
 nonterminal any_comment;
 // Parameters
-nonterminal top_level_formal_parameter_list, formal_parameter_list, formal_parameter;
+nonterminal top_level_formal_parameter_list, formal_parameter_list;
 // Sequence
 nonterminal seq_concat, evaluates_to_seq_or_id, seq_definition, no_trailing_comma_expressions, zero_or_more_comma_separated_expressions;
 nonterminal slicing, maybe_slicing_simple_exp;
 // Dict
 nonterminal dict_definition, no_trailing_comma_k_v_pairs, zero_or_more_k_v_pairs, dict_element;
 // Boolean
-nonterminal bool_expr, evaluates_to_bool, evaluates_to_bool_or_id, bool_oper, in_expr, comparison_expr, comparison_operator;
+nonterminal bool_expr, bool_oper, in_expr, comparison_expr, comparison_operator;
 
 /**
   * OLD STUFF
@@ -164,14 +166,14 @@ nonterminal bool_expr, evaluates_to_bool, evaluates_to_bool_or_id, bool_oper, in
 terminal BADCHAR; //TODO: Return this? When is it used?
 terminal PRINT, READ, RETURN, MAIN, FDEF, TDEF;
 nonterminal stmnts, stmnt, top_level;
-nonterminal full_exp, simple_exp, boolean_or_simple, operator;
+nonterminal full_exp, simple_exp, operator;
 nonterminal print_statement, read_statement, return_statement, alias_statement;
 nonterminal funcs_or_main, main_func, normal_func, normal_func_body;
 nonterminal funcs_or_global_decls, global_declarations, func_param_decl, func_body_no_return, func_body_with_return;
 
 precedence left AND, OR, IMPLIC;
 precedence left NOT;
-precedence left LESS, LESS_EQ, IN;
+precedence left LANGLE, LESS_EQ, EQUAL, NEQUAL, IN;
 precedence left PLUS, MINUS;
 precedence left DIV, MULT;
 precedence left POW;
@@ -179,8 +181,10 @@ precedence left CONCAT;
 precedence left FULLSTOP;
 precedence left ID; //TODO: Delete this line if necessary, it is a dirty hack
 precedence left ELSE;
-//precedence left RETURN;
-precedence left LCURLY;//TODO: Delete this when fixing return, this is a dirty hack
+precedence left QUESTIONMARK;
+precedence left LCURLY;
+//precedence left RETURN; //TODO: REMOVE THIS IF FIXED WHITESPACE HACK
+
 top_level
 ::=
     funcs_or_global_decls:fog {: if(debug()) System.out.println((Node)fog); :}
@@ -226,6 +230,7 @@ global_declaration_except_main
   | variable_decl_init:v {:RESULT=Node.n(v);:}
   | type_def:td {:RESULT=Node.n(td);:}
   | alias_statement:as {:RESULT=Node.n(as);:}
+  | function_call:fc SEMICOL {:RESULT=Node.n(fc);:}
 ;
 
 type_def
@@ -247,7 +252,7 @@ no_trailing_colon_type_def_pairs
 ;
 
 type_def_element
-::= boolean_or_simple:k COLON type:v {:RESULT=Node.n("TYPE_DEF_ELEM", k, v);:}
+::= simple_exp:k COLON type:v {:RESULT=Node.n("TYPE_DEF_ELEM", k, v);:}
 ;
 
 normal_func
@@ -307,6 +312,7 @@ stmnt
   | conditional:c {:RESULT=Node.n(c);:}
   | loop_cycle:l {:RESULT=Node.n(l);:}
   | compound_statement:cs {:RESULT=Node.n(cs);:}
+  | function_call:fc SEMICOL {:RESULT=Node.n(fc);:}
 ;
 
 compound_statement
@@ -317,8 +323,8 @@ compound_statement
 //TODO: Explain in ambiguities.txt that we also allow compound ifs
 conditional
 ::=
-    IF LPAREN bool_expr:be RPAREN THEN stmnt:ss FI {:RESULT=Node.n("IF_STATEMENT", be, ss);:}
-  | IF LPAREN bool_expr:be RPAREN THEN stmnt:s1 ELSE stmnt:s2 FI {:RESULT=Node.n("IF_ELSE", be, s1, s2);:}
+    IF LPAREN simple_exp:be RPAREN THEN stmnts:ss FI {:RESULT=Node.n("IF_STATEMENT", be, ss);:}
+  | IF LPAREN simple_exp:be RPAREN THEN stmnts:s1 ELSE stmnts:s2 FI {:RESULT=Node.n("IF_ELSE", be, s1, s2);:}
 ;
 
 /* L O O P B O I S (start) */
@@ -354,21 +360,30 @@ alias_statement
 
 full_exp
 ::=
-    boolean_or_simple:be SEMICOL {:RESULT=Node.n(be);:}
+    simple_exp:be SEMICOL {:RESULT=Node.n(be);:}
 ;
 
-boolean_or_simple
+/*simple_exp
 ::=
     bool_expr:be {:RESULT=Node.n(be);:}
   | simple_exp:se {:RESULT=Node.n(se);:}
-;
+;*/
 
 //TODO: Describe syntax of rationals in ambiguities.txt
 simple_exp
 ::=
     INTEGER:i {:RESULT=Node.n(i);:}
+  | MINUS INTEGER:i {:RESULT=Node.n(i);:}
+  | MINUS FLOAT:i {:RESULT=Node.n(i);:}
   | FLOAT:i {:RESULT=Node.n(i);:}
   | INTEGER:i UNDERSCORE INTEGER:j DIV INTEGER:k {:RESULT=Node.n("MIXED_RAT", i, j, k);:}
+  | MINUS INTEGER:i UNDERSCORE INTEGER:j DIV INTEGER:k {:RESULT=Node.n("MIXED_RAT", i, j, k);:}
+  | INTEGER:i UNDERSCORE MINUS INTEGER:j DIV INTEGER:k {:RESULT=Node.n("MIXED_RAT", i, j, k);:}
+  | INTEGER:i UNDERSCORE INTEGER:j DIV MINUS INTEGER:k {:RESULT=Node.n("MIXED_RAT", i, j, k);:}
+  | MINUS INTEGER:i UNDERSCORE MINUS INTEGER:j DIV INTEGER:k {:RESULT=Node.n("MIXED_RAT", i, j, k);:}
+  | MINUS INTEGER:i UNDERSCORE INTEGER:j DIV MINUS INTEGER:k {:RESULT=Node.n("MIXED_RAT", i, j, k);:}
+  | INTEGER:i UNDERSCORE MINUS INTEGER:j DIV MINUS INTEGER:k {:RESULT=Node.n("MIXED_RAT", i, j, k);:}
+  | MINUS INTEGER:i UNDERSCORE MINUS INTEGER:j DIV MINUS INTEGER:k {:RESULT=Node.n("MIXED_RAT", i, j, k);:}
   | CHAR:i {:RESULT=Node.n("CHARVAR");:}
   | STRING:i {:RESULT=Node.n("STRING");:}
   | simple_exp:sd CONCAT simple_exp:sq {:RESULT=Node.n("SEQ_CONCAT", sd, sq);:}
@@ -379,14 +394,22 @@ simple_exp
   | dict_definition:d {:RESULT=Node.n(d);:}
   | simple_exp:e1 operator:o simple_exp:e2 {:RESULT=Node.n(o, e1, e2);:}
   | LPAREN simple_exp:e RPAREN {:RESULT=Node.n("PARENS", "(", e, ")");:}
+  | function_call:fc {:RESULT=Node.n(fc);:}
+  | bool_expr:be {:RESULT=Node.n(be);:} //Let's forget type checking, man
+;
+
+function_call
+::=
+  QUESTIONMARK simple_exp:be QUESTIONMARK ID:i LPAREN zero_or_more_comma_separated_expressions:args RPAREN {:RESULT=Node.n("FUNCTIONCALL", be, i, args);:}
 ;
 
 bool_expr
 ::=
-   evaluates_to_bool:etb {:RESULT=Node.n(etb);:}
- | evaluates_to_bool_or_id:etb1 bool_oper:bo evaluates_to_bool_or_id:etb2 {:RESULT=Node.n(bo, etb1, etb2);:}
- | NOT bool_expr:be {:RESULT=Node.n("NOT", be);:}
+   simple_exp:etb1 bool_oper:bo simple_exp:etb2 {:RESULT=Node.n(bo, etb1, etb2);:}
+ | NOT simple_exp:be {:RESULT=Node.n("NOT", be);:}
  | in_expr:ie {:RESULT=Node.n(ie);:}
+ | BOOL {:RESULT=Node.n("BOOL");:}
+  //| LPAREN bool_expr:be RPAREN {:RESULT=Node.n(be);:}
  | comparison_expr:ce {:RESULT=Node.n(ce);:}
 ;
 
@@ -397,7 +420,7 @@ comparison_expr
 
 comparison_operator
 ::=
-    LESS {:RESULT=Node.n("LESS");:}
+    LANGLE {:RESULT=Node.n("LESS");:}
   | LESS_EQ {:RESULT=Node.n("LESS_EQ");:}
   | EQUAL  {:RESULT=Node.n("=");:}
   | NEQUAL {:RESULT=Node.n("!=");:}
@@ -411,19 +434,6 @@ in_expr
    simple_exp:se IN ID:i {:RESULT=Node.n(se, "in", i);:}
  | simple_exp:se IN dict_definition:i {:RESULT=Node.n("in", se, i);:}
  | simple_exp:se IN seq_definition:i {:RESULT=Node.n("in", se, i);:}
-;
-
-evaluates_to_bool_or_id
-::=
-    evaluates_to_bool:etb {:RESULT=Node.n(etb);:}
-  | ID:i {:RESULT=Node.n(i);:}
-;
-
-// TODO: Addeth function calls
-evaluates_to_bool
-::=
-    BOOL {:RESULT=Node.n("BOOL");:}
-  | LPAREN bool_expr:be RPAREN {:RESULT=Node.n(be);:}
 ;
 
 bool_oper
@@ -471,8 +481,8 @@ zero_or_more_comma_separated_expressions
 
 no_trailing_comma_expressions
 ::=
-     boolean_or_simple:e COMMA no_trailing_comma_expressions:es {:RESULT=Node.n("NON_ENDING_COMMA_LIST", e, es);:}
-   | boolean_or_simple:e {:RESULT=Node.n(e);:}
+     simple_exp:e COMMA no_trailing_comma_expressions:es {:RESULT=Node.n("NON_ENDING_COMMA_LIST", e, es);:}
+   | simple_exp:e {:RESULT=Node.n(e);:}
 ;
 
 dict_definition
@@ -494,7 +504,7 @@ no_trailing_comma_k_v_pairs
 ;
 
 dict_element
-::= boolean_or_simple:k COLON boolean_or_simple:v {:RESULT=Node.n("DICT_ELEM", k, v);:}
+::= simple_exp:k COLON simple_exp:v {:RESULT=Node.n("DICT_ELEM", k, v);:}
 ;
 
 read_statement
@@ -524,9 +534,16 @@ operator
 
 variable_decl_init
 ::=
-    element:e1 ASSIGN full_exp:e2 {:RESULT=Node.n("ASSIGNMENT", e1, e2);:}
-  | var_decl:v ASSIGN full_exp:e {:RESULT=Node.n("ASSIGNMENT", v, e);:}
+  type_def_assign:e {:RESULT=Node.n("TYPE_ASSIGNMENT", e);:}
+/*    element:e1 ASSIGN full_exp:e2 {:RESULT=Node.n("ASSIGNMENT", e1, e2);:}
+  | var_decl:v ASSIGN full_exp:e {:RESULT=Node.n("ASSIGNMENT", v, e);:}*/
   | var_decl:v SEMICOL {:RESULT=Node.n(v);:}
+;
+
+type_def_assign
+::=
+    element:e1 ASSIGN no_trailing_comma_expressions:e2 SEMICOL {:RESULT=Node.n("ASSIGNMENT", e1, e2);:}
+  | var_decl:v ASSIGN no_trailing_comma_expressions:e SEMICOL {:RESULT=Node.n("ASSIGNMENT", v, e);:}
 ;
 
 element
