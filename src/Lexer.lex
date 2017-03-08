@@ -44,13 +44,44 @@ import java_cup.runtime.*;
       case sym.UNDERSCORE:
         System.out.print("_"); break;
       case sym.INTEGER:
-        System.out.printf("INT %d", value); break;
+        System.out.printf("INT %s", value); break;
+      case sym.FLOAT:
+        System.out.printf("FLOAT %s", value); break;
+      case sym.STRING:
+        System.out.print("STRING"); break;
       case sym.ID:
         System.out.printf("ID %s", value); break;
       case sym.BOOL:
           System.out.printf("BOOL %s", value); break;
       case sym.CHAR:
           System.out.printf("CHAR %s", value); break;
+      case sym.ALIAS:
+          System.out.printf("ALIAS"); break;
+      case sym.SEQ:
+          System.out.print("SEQ"); break;
+      case sym.TYPE_CHAR:
+          System.out.print("TYPE_CHAR"); break;
+      case sym.LANGLE:
+          System.out.print("<"); break;
+      case sym.RANGLE:
+          System.out.print(">"); break;
+      case sym.LSQUARE:
+          System.out.print("["); break;
+      case sym.RSQUARE:
+          System.out.print("]"); break;
+      case sym.QUESTIONMARK:
+          System.out.print("?"); break;
+      case sym.IF:
+          System.out.print("IF"); break;
+      case sym.FI:
+          System.out.print("FI"); break;
+      case sym.THEN:
+          System.out.print("THEN"); break;
+      case sym.ELSE:
+          System.out.print("ELSE"); break;
+
+      default:
+          System.out.print(type);
     }
     System.out.print(">  ");
   }
@@ -76,16 +107,19 @@ Letter = [a-zA-Z]
 Digit = [0-9]
 IdChar = {Letter} | {Digit} | "_"
 Identifier = {Letter}{IdChar}*
-Integer = (-?{Digit}+)
-Float = (-?{Digit}*\.?{Digit}+)
+Integer = ({Digit}+)
+Float = ({Digit}*\.{Digit}+)
 //TODO what format to have for floats? e.g. do we allow -.1 for -.0.1,
 Bool = (T|F)
+CharWithout = ([a-zA-Z\x21\x23-\x40\x5b-\x60\x7b-\x7e]|\s)
 Char = ([a-zA-Z\x21-\x40\x5b-\x60\x7b-\x7e]|\s)
 Print = (print{Whitespace}+)
 Read = (read{Whitespace}+)
-Return = (return{Whitespace}+)
+Return = ((return{Whitespace}+)|(return;))
 CharVar = (\'({Char}|(\\(\\|\')))\')
-StringVar = (\"({Char}|(\\(\\|\")))*\")
+Alias = (alias{Whitespace}+)
+StringVar = (\"({CharWithout}|(\\(\\|\")))*\")
+QuestionMark = (\?)
 %%
 <YYINITIAL> {
   {MultiLineComment}     { return symbol(sym.MULTI_LINE_COMMENT);   }
@@ -94,28 +128,34 @@ StringVar = (\"({Char}|(\\(\\|\")))*\")
   {Read}        { return symbol(sym.READ);        }
   {Print}       { return symbol(sym.PRINT);       }
   {Return}      { return symbol(sym.RETURN);      }
+  {Alias}       { return symbol(sym.ALIAS);       }
   "main"        { return symbol(sym.MAIN);        }
+  "tdef"        { return symbol(sym.TDEF);        }
   "fdef"        { return symbol(sym.FDEF);        }
   "bool"        { return symbol(sym.TYPE_BOOL);   }
   "char"        { return symbol(sym.TYPE_CHAR);   }
   "int"         { return symbol(sym.TYPE_INT);    }
   "rat"         { return symbol(sym.TYPE_RAT);    }
   "float"       { return symbol(sym.TYPE_FLOAT);  }
-  "string"      { return symbol(sym.TYPE_STRING); }
   "seq"         { return symbol(sym.SEQ);         }
   "dict"        { return symbol(sym.DICT);        }
   "top"         { return symbol(sym.TYPE_TOP);    }
   "in"          { return symbol(sym.IN);          }
-  {CharVar}     { return symbol(sym.CHAR);                   }
-  {StringVar}   { return symbol(sym.STRING);                 }
-  {Integer}     { return symbol(sym.INTEGER,
-                                yytext()); }
+  "if"          { return symbol(sym.IF);          }
+  "fi"          { return symbol(sym.FI);          }
+  "then"        { return symbol(sym.THEN);        }
+  "else"        { return symbol(sym.ELSE);        }
+  {CharVar}     { return symbol(sym.CHAR);        }
+  {StringVar}   { return symbol(sym.STRING);      }
   {Float}       { return symbol(sym.FLOAT,
+                                yytext()); }
+  {Integer}     { return symbol(sym.INTEGER,
                                 yytext()); }
   {Bool}        { return symbol(sym.BOOL, yytext());         }
   {Identifier}  { return symbol(sym.ID, yytext());           }
 
   {Whitespace}  { /* do nothing */               }
+  {QuestionMark} { return symbol(sym.QUESTIONMARK);}
   "!"           { return symbol(sym.NOT);        }
   "&&"          { return symbol(sym.AND);        }
   "||"          { return symbol(sym.OR);         }
@@ -131,6 +171,9 @@ StringVar = (\"({Char}|(\\(\\|\")))*\")
   "*"           { return symbol(sym.MULT);       }
   "^"           { return symbol(sym.POW);        }
   "/"           { return symbol(sym.DIV);        }
+  "<="          { return symbol(sym.LESS_EQ);    }
+  "="           { return symbol(sym.EQUAL);      }
+  "!="          { return symbol(sym.NEQUAL);     }
   "("           { return symbol(sym.LPAREN);     }
   ")"           { return symbol(sym.RPAREN);     }
   "{"           { return symbol(sym.LCURLY);     }
@@ -139,6 +182,7 @@ StringVar = (\"({Char}|(\\(\\|\")))*\")
   "]"           { return symbol(sym.RSQUARE);    }
   "<"           { return symbol(sym.LANGLE);     }
   ">"           { return symbol(sym.RANGLE);     }
+  "."           { return symbol(sym.FULLSTOP);   }
 }
 
 [^]  {
