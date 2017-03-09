@@ -9,6 +9,7 @@ class SC {
     	Lexer lexer;
 		try {
 			lexer = new Lexer(new FileReader(args[0]));
+			//lexer.debug(true);
 			try {
 				Parser parser = new Parser(lexer);
 				Symbol result = parser.parse();
