@@ -127,8 +127,8 @@ StringVar = (\"({CharWithout}|(\\(\\|\")))*\")
 QuestionMark = (\?)
 %%
 <YYINITIAL> {
-  {MultiLineComment}     { return symbol(sym.MULTI_LINE_COMMENT);   }
-  {SingleLineComment}    { return symbol(sym.SINGLE_LINE_COMMENT);  }
+  {MultiLineComment}     { /*return symbol(sym.MULTI_LINE_COMMENT);*/  }
+  {SingleLineComment}    { /*return symbol(sym.SINGLE_LINE_COMMENT);*/  }
 
   {Read}        { return symbol(sym.READ);        }
   {Print}       { return symbol(sym.PRINT);       }
