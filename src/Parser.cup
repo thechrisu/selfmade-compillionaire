@@ -313,6 +313,7 @@ stmnt
   | loop_cycle:l {:RESULT=Node.n(l);:}
   | compound_statement:cs {:RESULT=Node.n(cs);:}
   | function_call:fc SEMICOL {:RESULT=Node.n(fc);:}
+  | normal_func:nc {:RESULT=Node.n(nc);:}
 ;
 
 compound_statement
