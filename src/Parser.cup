@@ -104,7 +104,7 @@ terminal LANGLE, RANGLE; // <>
 // Arithemtic operators
 terminal PLUS, MINUS, MULT, DIV, POW;
 // Comparions operators
-terminal LESS_EQ; // <, <=
+terminal LESS_EQ, GREATER_EQ; // <, <=
 // Dictionaries and sequences (collections)
 terminal DICT, SEQ, IN; // dict, seq
 //Field stuff
@@ -174,7 +174,7 @@ nonterminal funcs_or_global_decls, global_declarations, func_param_decl, func_bo
 
 precedence left AND, OR, IMPLIC;
 precedence left NOT;
-precedence left LANGLE, LESS_EQ, EQUAL, NEQUAL, IN;
+precedence left LANGLE, LESS_EQ, RANGLE, GREATER_EQ, EQUAL, NEQUAL, IN;
 precedence left PLUS, MINUS;
 precedence left DIV, MULT;
 precedence left POW;
@@ -437,7 +437,9 @@ comparison_expr
 comparison_operator
 ::=
     LANGLE {:RESULT=Node.n("LESS");:}
+  | RANGLE {:RESULT=Node.n("RANGLE");:}
   | LESS_EQ {:RESULT=Node.n("LESS_EQ");:}
+  | GREATER_EQ {:RESULT=Node.n("GREATER_EQ");:}
   | EQUAL  {:RESULT=Node.n("=");:}
   | NEQUAL {:RESULT=Node.n("!=");:}
 ;
@@ -599,12 +601,12 @@ type
   | type_seq:s  {:RESULT=Node.n(s);:}
   | type_dict:d {:RESULT=Node.n(d);:}
   | ID:i        {:RESULT=Node.n("CUSTOM_TYPE", i);:}
+  | TYPE_TOP {:RESULT=Node.n("TOP");:}
 ;
 
 collect_type
 ::=
     type:t   {:RESULT=Node.n(t);:}
-  | TYPE_TOP {:RESULT=Node.n("TOP");:}
 ;
 
 type_seq

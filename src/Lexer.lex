@@ -185,6 +185,7 @@ QuestionMark = (\?)
   "^"           { return symbol(sym.POW);        }
   "/"           { return symbol(sym.DIV);        }
   "<="          { return symbol(sym.LESS_EQ);    }
+  ">="          { return symbol(sym.GREATER_EQ);    }
   "="           { return symbol(sym.EQUAL);      }
   "!="          { return symbol(sym.NEQUAL);     }
   "("           { return symbol(sym.LPAREN);     }
