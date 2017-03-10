@@ -70,3 +70,7 @@ Paragraph: 17
 Problem: It's ambiguous whether variables can be declared without initialisation.
 Our solution: The wording in the paragraph suggests that it is possible so we're assuming it is. We're assuming
 that Z language can implicitly deduct the type of the variable that is being declared. 
+
+Paragraph: 13
+Problem: It's unclear whether declarations should not appear in a functions' statement
+Solution: We don't restrict the order of declarations/statments (comparable to any other modern language)
