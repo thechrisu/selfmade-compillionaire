@@ -596,12 +596,12 @@ type
   | type_seq:s  {:RESULT=Node.n(s);:}
   | type_dict:d {:RESULT=Node.n(d);:}
   | ID:i        {:RESULT=Node.n("CUSTOM_TYPE", i);:}
-  | TYPE_TOP {:RESULT=Node.n("TOP");:}
 ;
 
 collect_type
 ::=
     type:t   {:RESULT=Node.n(t);:}
+  | TYPE_TOP {:RESULT=Node.n("TOP");:}
 ;
 
 type_seq
