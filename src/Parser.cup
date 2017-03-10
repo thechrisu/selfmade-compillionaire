@@ -165,7 +165,7 @@ nonterminal primitive, easy_element, access;
 
 // Do something with ILLEGAL_CHARARCTER or drop it.
 terminal BADCHAR; //TODO: Return this? When is it used?
-terminal PRINT, READ, RETURN, MAIN, FDEF, TDEF;
+terminal PRINT, READ, RETURN, MAIN, FDEF, TDEF, INCRDECR;
 nonterminal stmnts, stmnt, top_level;
 nonterminal full_exp, simple_exp, operator;
 nonterminal print_statement, read_statement, return_statement, alias_statement;
@@ -409,6 +409,8 @@ primitive
 ::=
     INTEGER:i {:RESULT=Node.n(i);:}
   | MINUS INTEGER:i {:RESULT=Node.n(i);:}
+  | INTEGER:i INCRDECR
+  | MINUS INTEGER INCRDECR
   | MINUS FLOAT:i {:RESULT=Node.n(i);:}
   | FLOAT:i {:RESULT=Node.n(i);:}
   | BOOL {:RESULT=Node.n("BOOL");:}

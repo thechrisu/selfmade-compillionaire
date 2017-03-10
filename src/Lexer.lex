@@ -128,9 +128,10 @@ CharVar = (\'({Char}|(\\(\\|\')))\')
 Alias = (alias{Whitespace}+)
 StringVar = (\"({CharWithout}|(\\(\\|\")))*\")
 QuestionMark = (\?)
+IncrDecr = (++|--)
+
 %%
 <YYINITIAL> {
-  "*"          { return symbol(sym.READ);         }
   {MultiLineComment}     { /*return symbol(sym.MULTI_LINE_COMMENT);*/  }
   {SingleLineComment}    { /*return symbol(sym.SINGLE_LINE_COMMENT);*/ }
 
@@ -198,6 +199,7 @@ QuestionMark = (\?)
   "<"           { return symbol(sym.LANGLE);     }
   ">"           { return symbol(sym.RANGLE);     }
   "."           { return symbol(sym.FULLSTOP);   }
+  {IncrDecr}    { return symbol(sym.INCRDECR);   }
 }
 
 [^]  {
