@@ -74,3 +74,4 @@ not ASCII 126, because pipe (|) is used very commonly and the table mentions ASC
 implicating that probably they meant ASCII 124, and not ASCII 166
 TODO: Allow newline/tab for chars/strings?
 TODO: Write about whether we predefine strings
+TODO: Method calls

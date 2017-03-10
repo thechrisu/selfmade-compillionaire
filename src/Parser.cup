@@ -598,4 +598,3 @@ type_dict
 ::=
     DICT LANGLE type:t1 COMMA collect_type:t2 RANGLE {:RESULT = Node.n("DICT", t1, t2);:}
 ;
-
