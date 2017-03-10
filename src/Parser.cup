@@ -321,7 +321,11 @@ compound_statement
 conditional
 ::=
     IF LPAREN simple_exp:be RPAREN THEN stmnts:ss FI {:RESULT=Node.n("IF_STATEMENT", be, ss);:}
+  | IF LPAREN simple_exp:be RPAREN THEN FI {:RESULT=Node.n("IF_STATEMENT", be);:}
   | IF LPAREN simple_exp:be RPAREN THEN stmnts:s1 ELSE stmnts:s2 FI {:RESULT=Node.n("IF_ELSE", be, s1, s2);:}
+  | IF LPAREN simple_exp:be RPAREN THEN stmnts:s1 ELSE FI {:RESULT=Node.n("IF_ELSE", be, s1);:}
+  | IF LPAREN simple_exp:be RPAREN THEN ELSE stmnts: e2 FI {:RESULT=Node.n("IF_ELSE", be, e2);:}
+  | IF LPAREN simple_exp:be RPAREN THEN ELSE FI {:RESULT=Node.n("IF_ELSE", be);:}
 ;
 
 /* L O O P B O I S (start) */
