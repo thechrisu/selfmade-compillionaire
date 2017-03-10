@@ -199,7 +199,7 @@ IncrDecr = (\+\+|--)
   "<"           { return symbol(sym.LANGLE);     }
   ">"           { return symbol(sym.RANGLE);     }
   "."           { return symbol(sym.FULLSTOP);   }
-  {IncrDecr}    { return symbol(sym.INCRDECR);   }
+//  {IncrDecr}    { return symbol(sym.INCRDECR);   }
   {MultiLineCommentOpen} { return symbol(sym.MULTI_LINE_COMMENT_OPEN); }
 }
 
