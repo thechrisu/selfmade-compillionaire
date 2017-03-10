@@ -83,6 +83,8 @@ import java_cup.runtime.*;
           System.out.print("THEN"); break;
       case sym.ELSE:
           System.out.print("ELSE"); break;
+      case sym.TYPE_BOOL:
+          System.out.print("TYPE_BOOL"); break;
 
       default:
           System.out.print(type);
@@ -107,6 +109,7 @@ Whitespace = {Newline}|" "|"\t"
 MultiLineComment = (\/#(.|{Whitespace})*?#\/)
 SingleLineComment = (#.*?({Newline}))
 
+//{Whitespace}+)|(return;))
 Letter = [a-zA-Z]
 Digit = [0-9]
 IdChar = {Letter} | {Digit} | "_"
@@ -119,7 +122,7 @@ CharWithout = ([a-zA-Z\x21\x23-\x40\x5b-\x60\x7b-\x7e]|\s)
 Char = ([a-zA-Z\x21-\x40\x5b-\x60\x7b-\x7e]|\s)
 Print = (print{Whitespace}+)
 Read = (read{Whitespace}+)
-Return = ((return{Whitespace}+)|(return;))
+Return = ((return))
 Break = (break({Whitespace}+{Digit}+)?;)
 CharVar = (\'({Char}|(\\(\\|\')))\')
 Alias = (alias{Whitespace}+)

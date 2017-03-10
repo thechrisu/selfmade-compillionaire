@@ -141,7 +141,7 @@ nonterminal element;
 // Loops
 nonterminal loop_cycle, loop_stmnts, loop_stmnt, loop_conditional;
 // Variables and types
-nonterminal variable_decl_init, var_decl, type, maybe_type_decl, type_decl, type_def_open, type_def, type_def_assign;
+nonterminal variable_decl_init, var_decl, type, maybe_type_decl, type_def_open, type_def, type_def_assign;
 nonterminal zero_or_more_type_def_pairs, no_trailing_colon_type_def_pairs, type_def_element;
 nonterminal type_seq, type_dict, collect_type;
 // Functions
@@ -156,7 +156,8 @@ nonterminal slicing, maybe_slicing_simple_exp;
 // Dict
 nonterminal dict_definition, no_trailing_comma_k_v_pairs, zero_or_more_k_v_pairs, dict_element;
 // Boolean
-nonterminal bool_expr, bool_oper, in_expr, comparison_expr, comparison_operator;
+nonterminal bool_oper, in_expr, comparison_expr, comparison_operator;
+nonterminal primitive, easy_element, access;
 
 /**
   * OLD STUFF
@@ -182,7 +183,11 @@ precedence left FULLSTOP;
 precedence left ID; //TODO: Delete this line if necessary, it is a dirty hack
 precedence left ELSE;
 precedence left QUESTIONMARK;
-precedence left LCURLY;
+//precedence left SEMICOL;
+//precedence right COLON;
+//precedence left LCURLY;
+//precedence left LPAREN;
+//precedence left LSQUARE;
 //precedence left RETURN; //TODO: REMOVE THIS IF FIXED WHITESPACE HACK
 
 top_level
@@ -296,7 +301,7 @@ func_body_no_return
 
 func_body_with_return
 ::=
-    compound_statement:ss type_decl:td SEMICOL {:RESULT=Node.n("FUNC_BODY_WITH_RETURN", ss, td);:}
+    compound_statement:ss COLON type:td SEMICOL {:RESULT=Node.n("FUNC_BODY_WITH_RETURN", ss, td);:}
 ;
 
 stmnts
@@ -386,10 +391,27 @@ full_exp
 //TODO: Describe syntax of rationals in ambiguities.txt
 simple_exp
 ::=
+    element:e {:RESULT=Node.n(e); :}
+  | simple_exp:sd CONCAT simple_exp:sq {:RESULT=Node.n("SEQ_CONCAT", sd, sq);:}
+  | simple_exp:e1 operator:o simple_exp:e2 {:RESULT=Node.n(o, e1, e2);:}
+  | simple_exp:etb1 bool_oper:bo simple_exp:etb2 {:RESULT=Node.n(bo, etb1, etb2);:}
+  | NOT simple_exp:be {:RESULT=Node.n("NOT", be);:}
+  | in_expr:ie {:RESULT=Node.n(ie);:}
+  //| LPAREN bool_expr:be RPAREN {:RESULT=Node.n(be);:}
+  | comparison_expr:ce {:RESULT=Node.n(ce);:}
+  | dict_definition:d {:RESULT=Node.n(d);:} //TODO: Fix this, hacky, but works
+  //| bool_expr:be {:RESULT=Node.n(be);:} //Let's forget type checking, man
+//  | seq_concat:s {:RESULT=Node.n(s);:}
+//  | ID:i {:RESULT=Node.n(i);:}
+;
+
+primitive
+::=
     INTEGER:i {:RESULT=Node.n(i);:}
   | MINUS INTEGER:i {:RESULT=Node.n(i);:}
   | MINUS FLOAT:i {:RESULT=Node.n(i);:}
   | FLOAT:i {:RESULT=Node.n(i);:}
+  | BOOL {:RESULT=Node.n("BOOL");:}
   | INTEGER:i UNDERSCORE INTEGER:j DIV INTEGER:k {:RESULT=Node.n("MIXED_RAT", i, j, k);:}
   | MINUS INTEGER:i UNDERSCORE INTEGER:j DIV INTEGER:k {:RESULT=Node.n("MIXED_RAT", i, j, k);:}
   | INTEGER:i UNDERSCORE MINUS INTEGER:j DIV INTEGER:k {:RESULT=Node.n("MIXED_RAT", i, j, k);:}
@@ -400,31 +422,11 @@ simple_exp
   | MINUS INTEGER:i UNDERSCORE MINUS INTEGER:j DIV MINUS INTEGER:k {:RESULT=Node.n("MIXED_RAT", i, j, k);:}
   | CHAR:i {:RESULT=Node.n("CHARVAR");:}
   | STRING:i {:RESULT=Node.n("STRING");:}
-  | simple_exp:sd CONCAT simple_exp:sq {:RESULT=Node.n("SEQ_CONCAT", sd, sq);:}
-//  | seq_concat:s {:RESULT=Node.n(s);:}
-//  | ID:i {:RESULT=Node.n(i);:}
-  | element:e {:RESULT=Node.n(e); :}
-  | seq_definition:s {:RESULT=Node.n(s); :}
-  | dict_definition:d {:RESULT=Node.n(d);:}
-  | simple_exp:e1 operator:o simple_exp:e2 {:RESULT=Node.n(o, e1, e2);:}
-  | LPAREN simple_exp:e RPAREN {:RESULT=Node.n("PARENS", "(", e, ")");:}
-  | function_call:fc {:RESULT=Node.n(fc);:}
-  | bool_expr:be {:RESULT=Node.n(be);:} //Let's forget type checking, man
 ;
 
 function_call
 ::=
   QUESTIONMARK simple_exp:be QUESTIONMARK ID:i LPAREN zero_or_more_comma_separated_expressions:args RPAREN {:RESULT=Node.n("FUNCTIONCALL", be, i, args);:}
-;
-
-bool_expr
-::=
-   simple_exp:etb1 bool_oper:bo simple_exp:etb2 {:RESULT=Node.n(bo, etb1, etb2);:}
- | NOT simple_exp:be {:RESULT=Node.n("NOT", be);:}
- | in_expr:ie {:RESULT=Node.n(ie);:}
- | BOOL {:RESULT=Node.n("BOOL");:}
-  //| LPAREN bool_expr:be RPAREN {:RESULT=Node.n(be);:}
- | comparison_expr:ce {:RESULT=Node.n(ce);:}
 ;
 
 comparison_expr
@@ -495,8 +497,8 @@ zero_or_more_comma_separated_expressions
 
 no_trailing_comma_expressions
 ::=
-     simple_exp:e COMMA no_trailing_comma_expressions:es {:RESULT=Node.n("NON_ENDING_COMMA_LIST", e, es);:}
-   | simple_exp:e {:RESULT=Node.n(e);:}
+     simple_exp:e {:RESULT=Node.n(e);:}
+   | simple_exp:e COMMA no_trailing_comma_expressions:es {:RESULT=Node.n("NON_ENDING_COMMA_LIST", e, es);:}
 ;
 
 dict_definition
@@ -534,7 +536,7 @@ print_statement
 return_statement
 ::=
     RETURN full_exp:e {:RESULT = Node.n("RETURN", e);:}
-  | RETURN {:RESULT=Node.n("RETURN_HACK");:} //TODO: Fix return, bc right now we allow e.g. return; something;
+  | RETURN SEMICOL {:RESULT=Node.n("RETURN_HACK");:} //TODO: Fix return, bc right now we allow e.g. return; something;
 ;
 
 operator
@@ -548,34 +550,43 @@ operator
 
 variable_decl_init
 ::=
-  type_def_assign:e {:RESULT=Node.n("TYPE_ASSIGNMENT", e);:}
+  var_decl:v SEMICOL {:RESULT=Node.n(v);:}
 /*    element:e1 ASSIGN full_exp:e2 {:RESULT=Node.n("ASSIGNMENT", e1, e2);:}
   | var_decl:v ASSIGN full_exp:e {:RESULT=Node.n("ASSIGNMENT", v, e);:}*/
-  | var_decl:v SEMICOL {:RESULT=Node.n(v);:}
-;
+  | type_def_assign:e SEMICOL {:RESULT=Node.n("TYPE_ASSIGNMENT", e);:} ;
 
 type_def_assign
 ::=
-    element:e1 ASSIGN no_trailing_comma_expressions:e2 SEMICOL {:RESULT=Node.n("ASSIGNMENT", e1, e2);:}
-  | var_decl:v ASSIGN no_trailing_comma_expressions:e SEMICOL {:RESULT=Node.n("ASSIGNMENT", v, e);:}
+    element:v COLON type:t ASSIGN no_trailing_comma_expressions:e {:RESULT=Node.n("ASSIGNMENT", v, t, e);:}
+  | element:e1 ASSIGN no_trailing_comma_expressions:e2 {:RESULT=Node.n("ASSIGNMENT", e1, e2);:}
 ;
 
 element
 ::=
+    easy_element:e access:a {:RESULT=Node.n(e, a);:}
+;
+
+access
+::=
+    LSQUARE simple_exp:i RSQUARE access:a {:RESULT=Node.n("Index", i);:}
+  | slicing:sl access:a {:RESULT=Node.n("SLICED_SEQ", sl);:}
+  | FULLSTOP element:e2 {:RESULT=Node.n("FIELD_REFERENCE", e2);:}
+  | /* nuffin */ {:RESULT=Node.n("No access");:}
+;
+
+easy_element
+::=
     ID:i {:RESULT=Node.n(i);:}
-  | element:b LSQUARE simple_exp:i RSQUARE {:RESULT=Node.n(b, "Index", i);:}
-  | element:b slicing:sl {:RESULT=Node.n("SLICED_SEQ", b, sl);:}
-  | element:e1 FULLSTOP element:e2 {:RESULT=Node.n("FIELD_REFERENCE", e1, e2);:}
+  | primitive:p {:RESULT=Node.n(p);:}
+  | seq_definition:s {:RESULT=Node.n(s); :}
+  | LPAREN simple_exp:e RPAREN {:RESULT=Node.n("PARENS", "(", e, ")");:}
+  | function_call:fc {:RESULT=Node.n(fc);:}
 ;
 
 var_decl
 ::=
-    ID:i type_decl:td {:RESULT=Node.n("DECLARATION", i ,td);:}
-;
-
-type_decl
-::=
-    COLON type:t {:RESULT=Node.n("TYPE DECLARATION", t);:}
+    ID:i COLON type:td {:RESULT=Node.n("DECLARATION", i ,td);:}
+  | element:e COLON type:td {:RESULT=Node.n("DECL_HACK", e, td);:}
 ;
 
 type
