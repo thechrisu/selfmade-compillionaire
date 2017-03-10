@@ -282,11 +282,13 @@ normal_func_body
 func_body_no_return
 ::=
     compound_statement:ss SEMICOL {:RESULT=Node.n("FUNC_BODY_NO_RETURN", ss);:}
+  | LCURLY RCURLY SEMICOL
 ;
 
 func_body_with_return
 ::=
     compound_statement:ss COLON type:td SEMICOL {:RESULT=Node.n("FUNC_BODY_WITH_RETURN", ss, td);:}
+  | LCURLY RCURLY COLON type SEMICOL
 ;
 
 stmnts
