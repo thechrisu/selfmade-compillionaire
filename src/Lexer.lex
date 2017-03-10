@@ -128,7 +128,7 @@ CharVar = (\'({Char}|(\\(\\|\')))\')
 Alias = (alias{Whitespace}+)
 StringVar = (\"({CharWithout}|(\\(\\|\")))*\")
 QuestionMark = (\?)
-IncrDecr = (++|--)
+IncrDecr = (\+\+|--)
 
 %%
 <YYINITIAL> {
