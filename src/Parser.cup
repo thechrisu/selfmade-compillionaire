@@ -325,6 +325,7 @@ stmnt
   | compound_statement:cs {:RESULT=Node.n(cs);:}
   | function_call:fc SEMICOL {:RESULT=Node.n(fc);:}
   | normal_func:nc {:RESULT=Node.n(nc);:}
+  | SEMICOL
 ;
 
 compound_statement
@@ -362,6 +363,7 @@ loop_stmnt
   | loop_conditional:c {:RESULT=Node.n(c);:}
   | loop_cycle:l {:RESULT=Node.n(l);:}
   | compound_statement:cs {:RESULT=Node.n(cs);:}
+  | SEMICOL
 ;
 loop_conditional
 ::=
