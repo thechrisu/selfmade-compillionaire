@@ -1,32 +1,52 @@
-EXAMPLE:
-Paragraph: 72
-Problem: it is not clear whether we can omit both the start and end indices
-in sequence slicing, like "foo = bar[:]".
-Our solution: this is possible in many other languages that support list
-slicing (like Python), so our compiler accepts this syntax.
-
-// TODO: We do not allow overwriting existing keywords using `alias`
-
 Paragraph: 3
-Problem: TODO: Can multiline? comments appear mid-statement?
-Our solution: TODO
-
-Paragraph: 17
-Problem: It's ambiguous whether variables can be declared without initialisation.
-Our solution: The wording in the paragraph suggests that it is possible so we're assuming it is. (TODO: Update)
+Problem: It's not clear if multiline comments can appear mid-statement?
+Our solution: We treat multiline comments similar to whitespace and allow to appear anywhere, as long as when you remove
+the multiline comment the syntax is still valid.
 
 Paragraph: 5
-Problem: It's unclear exactly which single-quote character is meant in the definition of a char. 
+Problem: The ASCII table given to us uses ASCII 221(broken pipe ¦) in place of ASCII 124 (vertical bar |)
+Solution: We match for ASCII 124, not ASCII 126, because pipe (|) is used very commonly and the table mentions ASCII 123-126 in the surrounding rows,
+implicating that probably they meant ASCII 124, and not ASCII 221
+
+Paragraph: 5
+Problem: It's unclear exactly which single-quote character is meant in the definition of a char.
 Our solution: For simplicity, we only go with ASCII 39 ('), the character used to denote character literals in Java.
 While e.g. Python also accepts ASCII 96 (`), we are no Pythonistas.
 
-Paragraph: 16
-Problem: It's not explicit whether functions may be completely empty (in the definition it says
-'body consists of local variable declarations (if any), followed by statements', note that this
-does not specify whether it's 0..* or 1..* statements)
-Solution: We only allow non-empty functions (similar to Python), i.e. every function has to have
-1..* statements.
-In particular, main is not allowed to be empty and function declarations by the user are not allowed to be empty
+Paragraph: 7
+Problem: Are pre-increment (++i) and post increment (i++) (and decrement) operators allowed?
+Solution: We allow pre-increment, pre-decrement as well as post-increment and post-decrement operators because
+they are supported in most programming languages.
+
+Paragraph: 10
+Problem: It is not clear if we are supposed to predefine strings.
+Solution: We do not predefine `string` type in our language, but it can be declared using an alias.
+
+Paragraph: 11
+Problem: Can only integers be used as array slicing indices or can we use expressions?
+Solution: To make slicing in our language more powerful, we allow expressions to be used as slicing indices.
+
+Paragraph: 12
+Problem: Do we allow minus symbol right after other arithmetic operators (i.e. 1+-1 (== 0), and 1/-1 (== -1))
+Solution: Following the practice of most programming languages, we allow this construct.
+
+Paragraph: 12
+Problem : The specification only talks about less than and less than equal to
+symbols but not about the greater than and greater than symbols
+Solution: We only implemented the comparison operators mentioned in the spec. The compiler will fail on other operators.
+
+Paragraph: 13
+Problem: It is not clear if an empty tdef should be considered valid or not
+Solution: We allow an empty type definition. In theory, objects of that type can be used for comparisons.
+
+Paragraph: 13
+Problem: It's not clear if existing existing keywords can be overwritten using 'alias'
+Our solution: We do not allow overwriting existing keywords using `alias` because we consider it to be a bad practice
+that might confuse other developers viewing your code.
+
+Paragraph: 14
+Problem: It is not clear if 'void' can be used as a return type to functions
+Solution: We allow return to be used on its own, without a return value specified, since most languages allow it.
 
 Paragraph: 15
 Problem: It's not clear whether one has to have parentheses around empty function parameter declarations,
@@ -39,7 +59,6 @@ Solution: 'Normal' function declarations have to have parameter declaration pare
  can add commandline arguments, which are passed as parameters to the main function (these
  may be added to the language later, as they are extreeeeeeeemely popular in other languages).
  Thus, we cannot restrict main to not having parentheses at all.
-TODO: Tim/Keshav: What do you think about this chocie of ambiguity? Let's discuss
 
 Paragraph: 16
 Problem: The syntax around print/read is not clear: Should there just be a single space after the keyword?
@@ -47,31 +66,7 @@ Solution: Yes. print and read require one or more whitespace characters (i.e. \r
  This solution is similar to Python 2, in which constructs like 'print                 0' are allowed.
  Unlike Python, print() or read() is not allowed in our language.
 
-TODO verify that print() is not allowed and read() is not allowed
-TODO semicols at the end of funcs?
-TODO: "Empty" return allowed?
-TODO: Check for return type in func?a
-
-TODO: Partial function application?
-TODO: Global vars: Only mentions global variable DECLARATION, not that assignment is possible (however, its possible in most languages)
-TODO: Ints accept hexadecimal notation? (0x...)?
-TODO: What types are printable?
-TODO: Can you assign floats to int vars and ints to float variables?
-TODO: Can you assign rats to ints? Ints to rats?
-TODO: Whitespace in assign (i.e. is ':            =' possible?)
-TODO: Is i++ possible? ++i?
-TODO: Do we allow 1+-1 (== 0), and 1/-1 (== -1)? --> look at tests/custom/expressions/numbers!
-TODO: Character can contain ASCII except digits
-TODO: Can variables not start with underscore?
-TODO: Say we cannot check for type correctness in frontend of compiler (i.e. one may assign a string value to an int variable?)
-TODO: Mixing boolean and arithmetic expressions (e.g. ((1 + 1) or T))
-TODO: Array slicing: Are expressions allowed for slice indices?
-TODO: In spec, only smaller/smaller-eq is mentioned. Surely, you want greater and greater equal?
-TODO: Is empty tdef ok? (see test)
-TODO: Explain escaping rules (Do we allow newline? Do we allow tab? Do we allow \s for space)
-TODO: Explain that table on website uses ASCII 166 (broken pipe ¦) in place of ASCII 124. Instead we match for ASCII 124,
-not ASCII 126, because pipe (|) is used very commonly and the table mentions ASCII 123-126 in the surrounding rows,
-implicating that probably they meant ASCII 124, and not ASCII 166
-TODO: Allow newline/tab for chars/strings?
-TODO: Write about whether we predefine strings
-TODO: Method calls
+Paragraph: 17
+Problem: It's ambiguous whether variables can be declared without initialisation.
+Our solution: The wording in the paragraph suggests that it is possible so we're assuming it is. We're assuming
+that Z language can implicitly deduct the type of the variable that is being declared. 
