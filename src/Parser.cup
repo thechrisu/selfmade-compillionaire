@@ -114,7 +114,7 @@ terminal TYPE_BOOL, TYPE_CHAR, TYPE_INT, TYPE_RAT, TYPE_FLOAT, TYPE_TOP;
 // Other operators
 terminal CONCAT, SEMICOL, COLON, ASSIGN, COMMA, UNDERSCORE; // ::, ;, :, :=, \,, _
 // Comments
-terminal MULTI_LINE_COMMENT, SINGLE_LINE_COMMENT; // /#...#/, #...
+terminal MULTI_LINE_COMMENT, SINGLE_LINE_COMMENT, MULTI_LINE_COMMENT_OPEN; // /#...#/, #...
 
 // TODO: Test that function actually returns something of that type (i.e. if func is supposed to have return type int, check there's return int somewhere)
 // TODO: Test for allowed/disallowed ASCII characters as string/char AND for variable names
@@ -198,6 +198,7 @@ top_level
 
 funcs_or_global_decls // TODO: Add global variables to this
 ::=
+    funcs_or_main:fs {:RESULT=Node.n(fs);:} MULTI_LINE_COMMENT_OPEN |
     funcs_or_main:fs {:RESULT=Node.n(fs);:}
 ;
 

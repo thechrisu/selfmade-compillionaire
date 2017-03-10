@@ -108,7 +108,7 @@ Whitespace = {Newline}|" "|"\t"
 
 MultiLineComment = (\/#(.|{Whitespace})*?#\/)
 SingleLineComment = (#.*?({Newline}))
-
+MultiLineCommentOpen = (\/#)
 //{Whitespace}+)|(return;))
 Letter = [a-zA-Z]
 Digit = [0-9]
@@ -200,6 +200,7 @@ IncrDecr = (\+\+|--)
   ">"           { return symbol(sym.RANGLE);     }
   "."           { return symbol(sym.FULLSTOP);   }
   {IncrDecr}    { return symbol(sym.INCRDECR);   }
+  {MultiLineCommentOpen} { return symbol(sym.MULTI_LINE_COMMENT_OPEN); }
 }
 
 [^]  {
