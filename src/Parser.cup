@@ -116,19 +116,6 @@ terminal CONCAT, SEMICOL, COLON, ASSIGN, COMMA, UNDERSCORE; // ::, ;, :, :=, \,,
 // Comments
 terminal MULTI_LINE_COMMENT, SINGLE_LINE_COMMENT, MULTI_LINE_COMMENT_OPEN; // /#...#/, #...
 
-// TODO: Test that function actually returns something of that type (i.e. if func is supposed to have return type int, check there's return int somewhere)
-// TODO: Test for allowed/disallowed ASCII characters as string/char AND for variable names
-// TODO: Test for capital s in seq, and variations of this
-// TODO: Seq length checking
-// TODO: Rationals
-// TODO: Loop
-// TODO: If
-// TODO: Break
-// TODO: Test Function calls further
-// TODO: Don't allow keywords as e.g. function names
-// TODO: Null value
-// TODO: Alias
-// TODO: Are declarations only allowed before main?
 // TODO: In function, declarations have to occur first
 /**
   * NON-TERMINALS
@@ -196,15 +183,13 @@ top_level
 ;
 
 
-funcs_or_global_decls // TODO: Add global variables to this
+funcs_or_global_decls
 ::=
     funcs_or_main:fs {:RESULT=Node.n(fs);:} MULTI_LINE_COMMENT_OPEN |
     funcs_or_main:fs {:RESULT=Node.n(fs);:}
 ;
 
 
-//TODO add empty return for main (or any function)
-//TODO add error code return for main
 main_func
 ::=
     MAIN func_param_decl:p func_body_no_return:fb {:RESULT=Node.n("MAIN_FUNC", p, fb);:}
@@ -294,7 +279,6 @@ normal_func_body
   | func_body_with_return:r{:RESULT=Node.n(r);:}
 ;
 
-// TODO: Add declaration between statements
 func_body_no_return
 ::=
     compound_statement:ss SEMICOL {:RESULT=Node.n("FUNC_BODY_NO_RETURN", ss);:}
@@ -543,7 +527,7 @@ print_statement
 return_statement
 ::=
     RETURN full_exp:e {:RESULT = Node.n("RETURN", e);:}
-  | RETURN SEMICOL {:RESULT=Node.n("RETURN_HACK");:} //TODO: Fix return, bc right now we allow e.g. return; something;
+  | RETURN SEMICOL {:RESULT=Node.n("RETURN_HACK");:}
 ;
 
 operator
